@@ -46,13 +46,16 @@ let _visible    = true;
 let _elevations = null;   // cached after initTerrain resolves
 
 // ─── Public API ───────────────────────────────────────────────────────────────
-export async function initTerrain(scene) {
+export async function initTerrain(scene, opts = {}) {
+    const { onDEMLoaded, onTileProgress } = opts;
+
     console.log('[Terrain] Loading DEM…');
     _elevations = await _loadDEM();
     console.log(`[Terrain] DEM loaded — ${_elevations.length} samples`);
+    if (onDEMLoaded) onDEMLoaded();
 
     console.log('[Terrain] Fetching satellite tiles…');
-    const texture = await _fetchSatelliteTexture();
+    const texture = await _fetchSatelliteTexture({ onTileProgress });
     console.log('[Terrain] Satellite texture ready');
 
     _mesh = _buildMesh(_elevations, texture);
@@ -101,7 +104,8 @@ async function _loadDEM() {
 }
 
 // ─── Satellite texture ────────────────────────────────────────────────────────
-async function _fetchSatelliteTexture() {
+async function _fetchSatelliteTexture(opts = {}) {
+    const { onTileProgress } = opts;
     const canvasW = TILES_W * TILE_PX;
     const canvasH = TILES_H * TILE_PX;
 
@@ -125,6 +129,7 @@ async function _fetchSatelliteTexture() {
             if (loaded % 20 === 0 || loaded === total) {
                 console.log(`[Terrain] Tiles: ${loaded}/${total}`);
             }
+            if (onTileProgress) onTileProgress(loaded, total);
             resolve();
         };
         img.onerror = () => {
@@ -133,6 +138,7 @@ async function _fetchSatelliteTexture() {
             ctx.fillStyle = '#3a3a3a';
             ctx.fillRect(px, py, TILE_PX, TILE_PX);
             loaded++;
+            if (onTileProgress) onTileProgress(loaded, total);
             resolve();
         };
         img.src = url;

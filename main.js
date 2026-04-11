@@ -3,8 +3,15 @@ import { initTerrain, getTerrainMesh, sampleTerrainElevation } from './terrain.j
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { initMinimap, updateMinimap } from './minimap.js';
 import { ORIGIN_X, ORIGIN_Y } from './constants.js';
+import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
 const ELEVATION_OFFSET = -5;
+
+initLoadingScreen();
+
+window.addEventListener('loading-complete', () => {
+    console.log('[Main] Loading overlay dismissed.');
+}, { once: true });
 
 // 1. Scene setup
 const scene = new THREE.Scene();
@@ -396,11 +403,12 @@ uiContainer.appendChild(coneRow);
 // Clock for animations
 const clock = new THREE.Clock();
 
-// Loading manager — GLB assets only
+// Loading manager — GLB assets only.
+// Note: onProgress gives item counts (1 of 1) for a single file, not bytes —
+// the buildings bar will hold at 0% then snap to 100% on onLoad.
 const loadingManager = new THREE.LoadingManager();
-loadingManager.onLoad = () => {
-    console.log('All GLB models loaded.');
-};
+loadingManager.onProgress = (_url, loaded, total) => taskProgress('buildings', loaded, total);
+loadingManager.onLoad     = () => { taskDone('buildings'); console.log('All GLB models loaded.'); };
 
 const loader = new GLTFLoader(loadingManager);
 
@@ -460,7 +468,11 @@ function createPipeMaterial() {
 let _terrainShader = null;
 
 // --- Load Terrain ---
-initTerrain(scene).then((terrainMesh) => {
+initTerrain(scene, {
+    onDEMLoaded:    () => taskDone('dem'),
+    onTileProgress: (n, total) => taskProgress('tiles', n, total),
+}).then((terrainMesh) => {
+    taskDone('tiles'); // idempotent — ensures 100% if final onTileProgress already fired
     const terrainMaterial = terrainMesh.material;
 
 
@@ -509,7 +521,6 @@ initTerrain(scene).then((terrainMesh) => {
     };
 
     terrainMaterial.needsUpdate = true;
-    document.getElementById('loading').style.display = 'none';
 
     // --- Street Lights (nested here so DEM is guaranteed loaded) ---
     fetch('street_lights.geojson')
@@ -549,8 +560,9 @@ initTerrain(scene).then((terrainMesh) => {
             _streetCount  = count;
             updateBuildingLights(_currentTimeT);
             console.log(`Street lights loaded — ${count} points`);
+            taskSubDone('lighting');
         })
-        .catch(err => console.error('Street lights load error:', err));
+        .catch(err => { console.error('Street lights load error:', err); taskSubDone('lighting'); });
 
     // --- Highway Lights (nested here so DEM is guaranteed loaded) ---
     fetch('highway_lights.geojson')
@@ -590,8 +602,9 @@ initTerrain(scene).then((terrainMesh) => {
             _highwayCount  = count;
             updateBuildingLights(_currentTimeT);
             console.log(`Highway lights loaded — ${count} points`);
+            taskSubDone('lighting');
         })
-        .catch(err => console.error('Highway lights load error:', err));
+        .catch(err => { console.error('Highway lights load error:', err); taskSubDone('lighting'); });
 });
 
 // --- Load Buildings ---
@@ -678,8 +691,9 @@ fetch('pipelines_exported.geojson')
 
         console.log(`Pipes loaded — ${pipeNetwork.featureIndex.length} features`);
         console.log('Sample feature:', pipeNetwork.featureIndex[0]);
+        taskDone('pipelines');
     })
-    .catch(err => console.error('GeoJSON load error:', err));
+    .catch(err => { console.error('GeoJSON load error:', err); taskDone('pipelines'); });
 
 // --- Load Reservoirs from GeoJSON ---
 fetch('reservoirs.geojson')
@@ -726,8 +740,9 @@ fetch('reservoirs.geojson')
         });
 
         console.log(`Reservoirs loaded — ${geojson.features.length} features`);
+        taskSubDone('infrastructure');
     })
-    .catch(err => console.error('Reservoir GeoJSON load error:', err));
+    .catch(err => { console.error('Reservoir GeoJSON load error:', err); taskSubDone('infrastructure'); });
 
 // --- Load Pump Stations from GeoJSON ---
 fetch('pump_stations.geojson')
@@ -768,8 +783,9 @@ fetch('pump_stations.geojson')
         });
 
         console.log(`Pump stations loaded — ${geojson.features.length} features`);
+        taskSubDone('infrastructure');
     })
-    .catch(err => console.error('Pump station GeoJSON load error:', err));
+    .catch(err => { console.error('Pump station GeoJSON load error:', err); taskSubDone('infrastructure'); });
 
 // --- Shared time state (read by animate loop) ---
 let _currentTimeT = 0.5;
@@ -902,8 +918,9 @@ fetch('building_centroids.geojson')
 
         updateBuildingLights(_currentTimeT);
         console.log(`Building lights loaded — ${count} points`);
+        taskDone('centroids');
     })
-    .catch(err => console.error('Building centroids load error:', err));
+    .catch(err => { console.error('Building centroids load error:', err); taskDone('centroids'); });
 
 function _makeLightSprite() {
     const size = 64;
