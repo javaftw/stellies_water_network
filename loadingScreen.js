@@ -316,8 +316,8 @@ function _section(labelText, bodyText) {
     const body = document.createElement('p');
     body.textContent = bodyText;
     body.style.cssText = `
-        font-size: 14px; font-style: italic;
-        color: #555; line-height: 1.8; margin: 0;
+        font-size: 16px; font-style: italic;
+        color: #999; line-height: 1.8; margin: 0;
     `;
 
     wrap.appendChild(label);
