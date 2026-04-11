@@ -308,9 +308,9 @@ function _section(labelText, bodyText) {
     const label = document.createElement('div');
     label.textContent = labelText;
     label.style.cssText = `
-        font-size: 10px; font-weight: 600;
+        font-size: 13px; font-weight: 600;
         letter-spacing: 0.14em; text-transform: uppercase;
-        color: #444; margin-bottom: 10px;
+        color: #888; margin-bottom: 10px;
     `;
 
     const body = document.createElement('p');
