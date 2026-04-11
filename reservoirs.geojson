@@ -1,0 +1,25 @@
+{
+"type": "FeatureCollection",
+"name": "reservoirs",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32734" } },
+"xy_coordinate_resolution": 1e-15,
+"features": [
+{ "type": "Feature", "properties": { "fid": 1, "id": null, "name": "Kleinvallei", "twl_m": 218.4, "capacity_kl": 2300 }, "geometry": { "type": "Point", "coordinates": [ 300478.026499075407628, 6243422.950226652435958, 216.99969482421875 ] } },
+{ "type": "Feature", "properties": { "fid": 2, "id": null, "name": "Kayamandi", "twl_m": 224.3, "capacity_kl": 4000 }, "geometry": { "type": "Point", "coordinates": [ 300371.896510372112971, 6244084.374968504533172, 225.451278686523438 ] } },
+{ "type": "Feature", "properties": { "fid": 3, "id": null, "name": "Papagaaiberg", "twl_m": 137.1, "capacity_kl": 4500 }, "geometry": { "type": "Point", "coordinates": [ 300939.146617976482958, 6242647.949617454782128, 138.902236938476562 ] } },
+{ "type": "Feature", "properties": { "fid": 4, "id": null, "name": "Paradyskloof", "twl_m": 191.8, "capacity_kl": 10000 }, "geometry": { "type": "Point", "coordinates": [ 302911.780103655124549, 6240206.750134220346808, 190.451416015625 ] } },
+{ "type": "Feature", "properties": { "fid": 5, "id": null, "name": "Paradyskloof 2", "twl_m": 222.5, "capacity_kl": 2500 }, "geometry": { "type": "Point", "coordinates": [ 303207.93730533280177, 6239886.891966685652733, 222.27337646484375 ] } },
+{ "type": "Feature", "properties": { "fid": 6, "id": null, "name": "Bradwacht", "twl_m": 280.0, "capacity_kl": 1300 }, "geometry": { "type": "Point", "coordinates": [ 303711.687701316841412, 6240072.51457538548857, 278.999847412109375 ] } },
+{ "type": "Feature", "properties": { "fid": 7, "id": null, "name": "Welgelegen", "twl_m": 170.7, "capacity_kl": 1600 }, "geometry": { "type": "Point", "coordinates": [ 302791.177843765413854, 6241311.676577875390649, 168.451568603515625 ] } },
+{ "type": "Feature", "properties": { "fid": 8, "id": null, "name": "Uniepark", "twl_m": 229.9, "capacity_kl": 5500 }, "geometry": { "type": "Point", "coordinates": [ 305440.022957070963457, 6244009.916181969456375, 227.999542236328125 ] } },
+{ "type": "Feature", "properties": { "fid": 9, "id": null, "name": "Uniepark 2", "twl_m": 229.4, "capacity_kl": 1500 }, "geometry": { "type": "Point", "coordinates": [ 305411.288157758070156, 6244032.044074870646, 223.99969482421875 ] } },
+{ "type": "Feature", "properties": { "fid": 10, "id": null, "name": "Arbeidslus", "twl_m": 273.1, "capacity_kl": 2000 }, "geometry": { "type": "Point", "coordinates": [ 305863.179581989417784, 6243885.119060864672065, 274.5479736328125 ] } },
+{ "type": "Feature", "properties": { "fid": 11, "id": null, "name": "Rozendal", "twl_m": 189.0, "capacity_kl": 4500 }, "geometry": { "type": "Point", "coordinates": [ 305124.988879932381678, 6243521.005107529461384, 186.097457885742188 ] } },
+{ "type": "Feature", "properties": { "fid": 12, "id": null, "name": "Idas Valley 2", "twl_m": 188.7, "capacity_kl": 4500 }, "geometry": { "type": "Point", "coordinates": [ 304817.715296038775705, 6244237.277659744024277, 189.273681640625 ] } },
+{ "type": "Feature", "properties": { "fid": 13, "id": null, "name": "Idas Valley 1", "twl_m": 176.0, "capacity_kl": 1700 }, "geometry": { "type": "Point", "coordinates": [ 304650.759819738974329, 6244247.345326656475663, 174.72540283203125 ] } },
+{ "type": "Feature", "properties": { "fid": 14, "id": null, "name": "Jamestown 1", "twl_m": 175.8, "capacity_kl": 1600 }, "geometry": { "type": "Point", "coordinates": [ 301478.081412389990874, 6236967.897791239432991, 179.999847412109375 ] } },
+{ "type": "Feature", "properties": { "fid": 15, "id": null, "name": "Jamestown 2", "twl_m": 171.6, "capacity_kl": 340 }, "geometry": { "type": "Point", "coordinates": [ 301292.668546750559472, 6237168.412157247774303, 171.7257080078125 ] } },
+{ "type": "Feature", "properties": { "fid": 16, "id": null, "name": "Cloetesville Tower", "twl_m": 206.3, "capacity_kl": 50 }, "geometry": { "type": "Point", "coordinates": [ 301636.258659543527756, 6246377.209847239777446, 186.725555419921875 ] } },
+{ "type": "Feature", "properties": { "fid": 17, "id": null, "name": "Cloetesville", "twl_m": 189.0, "capacity_kl": 2300 }, "geometry": { "type": "Point", "coordinates": [ 301638.815219264593907, 6246355.606917596422136, 186.9993896484375 ] } }
+]
+}

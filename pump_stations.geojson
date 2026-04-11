@@ -1,0 +1,17 @@
+{
+"type": "FeatureCollection",
+"name": "pump_stations",
+"crs": { "type": "name", "properties": { "name": "urn:ogc:def:crs:EPSG::32734" } },
+"xy_coordinate_resolution": 1e-15,
+"features": [
+{ "type": "Feature", "properties": { "fid": 1, "id": null, "name": "Kayamandi", "flow_ls": 20.0, "head_m": 40, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 300493.284722251817584, 6243439.978383717127144, 216.00030517578125 ] } },
+{ "type": "Feature", "properties": { "fid": 2, "id": null, "name": "Papegaaiberg", "flow_ls": null, "head_m": null, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 300932.501682329515461, 6242665.97992816567421, 138.450668334960938 ] } },
+{ "type": "Feature", "properties": { "fid": 3, "id": null, "name": "Kayamandi", "flow_ls": 22.0, "head_m": 140, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 301388.591936566517688, 6244660.863478509709239, 109.00030517578125 ] } },
+{ "type": "Feature", "properties": { "fid": 4, "id": null, "name": "Paradyskloof 2", "flow_ls": null, "head_m": null, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 303190.199571996286977, 6239891.090006928890944, 221.273223876953125 ] } },
+{ "type": "Feature", "properties": { "fid": 5, "id": null, "name": "Paradyskloof 2", "flow_ls": 55.0, "head_m": 35, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 302919.204241564089898, 6240267.287769882939756, 184.2742919921875 ] } },
+{ "type": "Feature", "properties": { "fid": 6, "id": null, "name": "Welgelegen", "flow_ls": 17.0, "head_m": 114, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 302767.280680140189361, 6241302.566628924570978, 165.99969482421875 ] } },
+{ "type": "Feature", "properties": { "fid": 7, "id": null, "name": "Transfer", "flow_ls": 145.0, "head_m": 45, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 302641.625769850041252, 6241844.940773747861385, 113.274589538574219 ] } },
+{ "type": "Feature", "properties": { "fid": 8, "id": null, "name": "Rozendal", "flow_ls": 32.0, "head_m": 90, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 305154.340491692069918, 6243507.982872293330729, 184.823623657226562 ] } },
+{ "type": "Feature", "properties": { "fid": 9, "id": null, "name": "Idas Valley 2", "flow_ls": 180.0, "head_m": 53, "suction_res_id": null, "delivery_rs_id": null }, "geometry": { "type": "Point", "coordinates": [ 304842.184549750876613, 6244219.217786696739495, 192.273681640625 ] } }
+]
+}

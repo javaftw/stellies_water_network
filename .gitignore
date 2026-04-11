@@ -1,0 +1,16 @@
+# Python virtual environment
+geometry_simplifier/.venv/
+
+# Generated SVG outputs (produced by geometry_simplifier.py / network_gridifier.py)
+geometry_simplifier/simplified.svg
+geometry_simplifier/grid_orthogonal_clean.svg
+
+# QGIS layer metadata (not needed by web app)
+*.qmd
+
+# Claude Code session data
+.claude/
+
+# OS noise
+.DS_Store
+Thumbs.db
