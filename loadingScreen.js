@@ -69,9 +69,12 @@ function _updateBar(id) {
     const b   = _bars[id];
     if (!b) return;
     const pct = t.total > 0 ? Math.min(100, Math.round((t.n / t.total) * 100)) : 0;
-    b.fill.style.width   = pct + '%';
-    b.pct.textContent    = t.done ? 'done' : pct + '%';
-    if (t.done) b.pct.style.color = '#00ccff';
+    b.fill.style.width = pct + '%';
+    b.pct.textContent  = t.done ? 'done' : pct + '%';
+    if (t.done) {
+        b.pct.style.color      = '#00ccff';
+        b.fill.style.animation = 'ls-bar-complete 0.9s ease-out forwards';
+    }
 }
 
 function _checkAllDone() {
@@ -153,6 +156,11 @@ function _buildDOM() {
             0%, 100% { box-shadow: 0 0 12px rgba(0,204,255,0.35), 0 0 28px rgba(0,204,255,0.12); }
             50%       { box-shadow: 0 0 28px rgba(0,204,255,0.80), 0 0 56px rgba(0,204,255,0.30); }
         }
+        @keyframes ls-bar-complete {
+            0%   { background: #00ff88; box-shadow: 0 0 6px rgba(0,255,136,0.9), 0 0 14px rgba(0,255,136,0.5); }
+            55%  { background: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.7), 0 0 22px rgba(0,255,136,0.3); }
+            100% { background: #00ccff; box-shadow: none; }
+        }
     `;
     document.head.appendChild(styleEl);
 
@@ -220,7 +228,7 @@ function _buildDOM() {
         const fill = document.createElement('div');
         fill.style.cssText = `
             height: 100%; width: 0%;
-            background: #00ccff; border-radius: 2px;
+            background: #ff3333; border-radius: 2px;
             transition: width 0.25s ease-out;
         `;
         track.appendChild(fill);
