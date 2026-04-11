@@ -166,8 +166,8 @@ function _buildDOM() {
         opacity: 1;
     `;
     moreIndicator.innerHTML = `
-        <span style="color:#555; font-size:11px; letter-spacing:0.1em; margin-bottom:4px;">more</span>
-        <span style="color:#555; font-size:18px; line-height:1; animation:ls-bounce 1.4s ease-in-out infinite;">↓</span>
+        <span style="color:#999; font-size:13px; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px;">more</span>
+        <span style="color:#00ccff; font-size:28px; line-height:1; animation:ls-bounce 1.4s ease-in-out infinite;">↓</span>
     `;
     styleEl.textContent += `
         @keyframes ls-bounce {
