@@ -1,6 +1,6 @@
 // ─── loadingScreen.js ─────────────────────────────────────────────────────────
 // Full-screen loading overlay with real asset progress tracking and a narrative
-// introduction from Mokopa to Dr Alexander Sinske at GLS.
+// introduction from Hennie Kotze to Dr Alexander Sinske at GLS.
 //
 // USAGE:
 //   import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
@@ -312,13 +312,13 @@ function _buildNarrative() {
     `;
     portrait.innerHTML = `
         <span style="color:#333; font-size:11px; letter-spacing:0.08em; text-align:center; line-height:1.6;">
-            [ Portrait:<br>Mokopa ]
+            [ Portrait:<br>Hennie Kotze ]
         </span>
     `;
 
     introWrap.appendChild(portrait);
     introWrap.appendChild(_section('INTRODUCTION',
-        'My name is Mokopa — a Stellenbosch-based senior developer and QGIS enthusiast. ' +
+        'My name is Hennie Kotze — a Stellenbosch-based senior developer and QGIS enthusiast. ' +
         'This viewer is a proactive initiative, not a response to an advertised position. ' +
         'I built it to demonstrate how spatial data expertise and software engineering ' +
         'intersect in practice, using GLS\'s own municipal domain as the subject.'
@@ -347,6 +347,29 @@ function _buildNarrative() {
         'them cleanly — these are what I bring to GLS. I take initiative, I understand ' +
         'your domain, and I processed every layer you see below myself.'
     ));
+
+    // Contact details
+    const contact = document.createElement('div');
+    contact.style.cssText = 'margin-bottom: 48px;';
+    const contactLabel = document.createElement('div');
+    contactLabel.textContent = 'CONTACT';
+    contactLabel.style.cssText = `
+        font-size: 13px; font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #888; margin-bottom: 10px;
+    `;
+    const contactBody = document.createElement('div');
+    contactBody.style.cssText = 'display:flex; flex-direction:column; gap:6px;';
+    contactBody.innerHTML = `
+        <span style="font-size:16px; color:#999;">
+            <a href="mailto:javaftw@gmail.com"
+               style="color:#00ccff; text-decoration:none;">javaftw@gmail.com</a>
+        </span>
+        <span style="font-size:16px; color:#999;">079 352 4417</span>
+    `;
+    contact.appendChild(contactLabel);
+    contact.appendChild(contactBody);
+    frag.appendChild(contact);
 
     return frag;
 }
