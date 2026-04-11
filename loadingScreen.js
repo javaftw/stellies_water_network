@@ -81,10 +81,11 @@ function _checkAllDone() {
 function _showCTA() {
     const cta = document.getElementById('ls-cta');
     if (!cta) return;
-    cta.style.display  = 'inline-block';
-    cta.style.opacity  = '0';
-    cta.style.transition = 'opacity 0.5s ease';
-    requestAnimationFrame(() => { cta.style.opacity = '1'; });
+    cta.style.display = 'inline-block';
+    requestAnimationFrame(() => {
+        cta.style.opacity   = '1';
+        cta.style.animation = 'ls-pulse 2s ease-in-out infinite';
+    });
 }
 
 function _dismiss() {
@@ -145,6 +146,41 @@ function _buildDOM() {
     narrative.appendChild(_buildNarrative());
     body.appendChild(narrative);
 
+    // ── Keyframe for CTA pulse glow ───────────────────────────────────────────
+    const styleEl = document.createElement('style');
+    styleEl.textContent = `
+        @keyframes ls-pulse {
+            0%, 100% { box-shadow: 0 0 12px rgba(0,204,255,0.35), 0 0 28px rgba(0,204,255,0.12); }
+            50%       { box-shadow: 0 0 28px rgba(0,204,255,0.80), 0 0 56px rgba(0,204,255,0.30); }
+        }
+    `;
+    document.head.appendChild(styleEl);
+
+    // ── Scroll "more" indicator ───────────────────────────────────────────────
+    const moreIndicator = document.createElement('div');
+    moreIndicator.id = 'ls-more';
+    moreIndicator.style.cssText = `
+        position: fixed; bottom: 208px; left: 0; right: 0;
+        display: flex; flex-direction: column; align-items: center;
+        pointer-events: none; transition: opacity 0.3s ease;
+        opacity: 1;
+    `;
+    moreIndicator.innerHTML = `
+        <span style="color:#555; font-size:11px; letter-spacing:0.1em; margin-bottom:4px;">more</span>
+        <span style="color:#555; font-size:18px; line-height:1; animation:ls-bounce 1.4s ease-in-out infinite;">↓</span>
+    `;
+    styleEl.textContent += `
+        @keyframes ls-bounce {
+            0%, 100% { transform: translateY(0); }
+            50%       { transform: translateY(4px); }
+        }
+    `;
+
+    body.addEventListener('scroll', () => {
+        const t = Math.min(1, body.scrollTop / 120);
+        moreIndicator.style.opacity = String(1 - t);
+    });
+
     // ── Footer ────────────────────────────────────────────────────────────────
     const footer = document.createElement('div');
     footer.id = 'ls-footer';
@@ -153,15 +189,19 @@ function _buildDOM() {
         height: 200px;
         background: #0d0d0d;
         border-top: 1px solid #1a1a1a;
-        padding: 16px 32px 14px;
         display: flex;
-        flex-direction: column;
-        justify-content: space-between;
+        flex-direction: row;
+        align-items: stretch;
     `;
 
+    // Left 75% — progress bars
     const barsEl = document.createElement('div');
     barsEl.id = 'ls-bars';
-    barsEl.style.cssText = 'display:flex; flex-direction:column; gap:5px;';
+    barsEl.style.cssText = `
+        flex: 3;
+        display: flex; flex-direction: column; justify-content: center; gap: 6px;
+        padding: 16px 28px 16px 32px;
+    `;
 
     for (const [id, task] of Object.entries(TASKS)) {
         const row = document.createElement('div');
@@ -201,31 +241,41 @@ function _buildDOM() {
         barsEl.appendChild(row);
     }
 
-    // ── CTA ──────────────────────────────────────────────────────────────────
+    // Right 25% — CTA
+    const ctaWrap = document.createElement('div');
+    ctaWrap.style.cssText = `
+        flex: 1;
+        display: flex; align-items: center; justify-content: center;
+        border-left: 1px solid #1a1a1a;
+    `;
+
     const cta = document.createElement('button');
     cta.id = 'ls-cta';
     cta.textContent = 'Explore →';
     cta.style.cssText = `
         display: none;
-        align-self: flex-end;
-        padding: 8px 28px;
+        padding: 14px 32px;
         background: transparent;
         border: 1px solid #00ccff;
         color: #00ccff;
-        font-size: 13px;
-        letter-spacing: 0.1em;
+        font-size: 16px;
+        letter-spacing: 0.14em;
         cursor: pointer;
         font-family: inherit;
+        opacity: 0;
+        transition: opacity 0.5s ease, background 0.2s ease;
     `;
-    cta.addEventListener('mouseover', () => { cta.style.background = 'rgba(0,204,255,0.08)'; });
+    cta.addEventListener('mouseover', () => { cta.style.background = 'rgba(0,204,255,0.1)'; });
     cta.addEventListener('mouseout',  () => { cta.style.background = 'transparent'; });
     cta.addEventListener('click', _dismiss);
 
+    ctaWrap.appendChild(cta);
     footer.appendChild(barsEl);
-    footer.appendChild(cta);
+    footer.appendChild(ctaWrap);
 
     overlay.appendChild(skip);
     overlay.appendChild(body);
+    overlay.appendChild(moreIndicator);
     overlay.appendChild(footer);
     document.body.appendChild(overlay);
 }
