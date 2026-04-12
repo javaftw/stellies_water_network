@@ -720,6 +720,7 @@ initTerrain(scene, {
             });
             const points = new THREE.Points(geom, mat);
             points.frustumCulled = false;
+            points.renderOrder   = 1; // render after terrain (transparent sort fix)
             scene.add(points);
             _streetLights = points;
             _streetCount  = count;
@@ -762,6 +763,7 @@ initTerrain(scene, {
             });
             const points = new THREE.Points(geom, mat);
             points.frustumCulled = false;
+            points.renderOrder   = 1; // render after terrain (transparent sort fix)
             scene.add(points);
             _highwayLights = points;
             _highwayCount  = count;
@@ -1185,6 +1187,7 @@ fetch('building_centroids.geojson')
 
         buildingLights.points = new THREE.Points(geom, mat);
         buildingLights.points.frustumCulled = false;
+        buildingLights.points.renderOrder   = 1; // render after terrain (transparent sort fix)
         buildingLights.count  = count;
         scene.add(buildingLights.points);
 
