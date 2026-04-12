@@ -1,9 +1,5 @@
-# Python virtual environment
-geometry_simplifier/.venv/
-
-# Generated SVG outputs (produced by geometry_simplifier.py / network_gridifier.py)
-geometry_simplifier/simplified.svg
-geometry_simplifier/grid_orthogonal_clean.svg
+# Offline geometry utilities — separate repo, not part of the web app
+geometry_simplifier/
 
 # QGIS layer metadata (not needed by web app)
 *.qmd
