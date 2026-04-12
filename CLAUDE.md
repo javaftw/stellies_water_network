@@ -16,10 +16,11 @@ No build step — plain ES6 modules served statically (open `index.html` directl
 |---|---|
 | `index.html` | Entry point. Loads CDN deps, importmap, `main.js` |
 | `constants.js` | Single source of truth for shared geographic constants |
+| `loadingScreen.js` | Full-screen loading overlay — progress tracking + narrative intro |
 | `main.js` | Scene, camera, lighting, asset loading, UI controls |
 | `terrain.js` | DEM parsing, satellite tile fetch, terrain mesh + x-ray shader |
 | `minimap.js` | Leaflet 2D minimap — camera sync, click-to-teleport, drag-to-pan |
-| `geometry_simplifier/` | Offline Python utilities — not part of the web app |
+| `geometry_simplifier/` | Offline Python utilities — separate repo, not part of the web app |
 
 ---
 
@@ -36,9 +37,9 @@ No build step — plain ES6 modules served statically (open `index.html` directl
 ## Coordinate system
 
 - GIS data: **UTM Zone 34S (EPSG:32734)**
-- Scene origin: `ORIGIN_X = 302335.0`, `ORIGIN_Y = 6241833.0` (defined at top of `main.js`)
+- Scene origin: `ORIGIN_X = 302335.0`, `ORIGIN_Y = 6241833.0` — imported from `constants.js` by all three modules
 - Conversion: `sceneX = utmE − ORIGIN_X`, `sceneZ = −(utmN − ORIGIN_Y)`
-- `ELEVATION_OFFSET = -5` applied to building/pipe geometry to align with terrain mesh
+- `ELEVATION_OFFSET = -5` (local to `main.js`) applied to building/pipe geometry to align with terrain mesh
 
 ---
 
@@ -109,6 +110,47 @@ gl_FragColor.a = mix(1.0, mix(0.15, 1.0, t), xrayEnabled);
 | Red reticule (crosshair + arrow) | Cone centre on ground; arrow points in view direction |
 | Black polygon | Camera FOV footprint |
 | Red polygon | X-ray cone ground intersection (hidden when x-ray off) |
+
+---
+
+## Loading screen (loadingScreen.js)
+
+Full-screen dark overlay injected into `<body>` by `initLoadingScreen()` before any Three.js setup. Dismissed via "skip →" (top-right, always visible) or "Explore →" CTA (appears when all tasks complete). Fires `window CustomEvent('loading-complete')` on dismiss.
+
+### Task registry
+
+| ID | Label | Tracks |
+|---|---|---|
+| `dem` | Elevation model | `onDEMLoaded` callback from `initTerrain` |
+| `tiles` | Satellite imagery | `onTileProgress(n, 483)` callback from `initTerrain` |
+| `buildings` | 3D buildings | `THREE.LoadingManager.onLoad` |
+| `pipelines` | Pipe network | `pipelines_exported.geojson` fetch |
+| `infrastructure` | Infrastructure | reservoirs + pump stations (2-file, uses `taskSubDone`) |
+| `lighting` | Lighting data | street_lights + highway_lights (2-file, uses `taskSubDone`) |
+| `centroids` | Building centroids | `building_centroids.geojson` fetch |
+
+### API
+```js
+initLoadingScreen()            // build DOM — call before any async loads
+taskProgress(id, n, total)     // update a bar mid-load (tiles, buildings)
+taskDone(id)                   // mark a single-file task complete
+taskSubDone(id)                // one call per sub-file; auto-completes when all done
+```
+
+### Progress bar behaviour
+- Bars are **red** (`#ff3333`) while loading
+- On completion: briefly flashes **green** (`#00ff88` glow) then settles to **cyan** (`#00ccff`) via `ls-bar-complete` keyframe animation
+- "done" label replaces the percentage in cyan when complete
+
+### Layout
+- Scrollable narrative area (`calc(100vh - 200px)`): salutation to Dr Sinske, portrait placeholder, Introduction / Pipeline / Skills sections, 2 QGIS screenshot placeholders, contact details
+- Fixed 200px footer: progress bars (left 75%) | Explore button (right 25%)
+- "more ↓" scroll indicator above footer fades out over first 120px of scroll
+- Explore button pulses with cyan glow (`ls-pulse` animation) once all tasks complete
+
+### Narrative content (placeholder — to be replaced)
+Author: **Hennie Kotze** | Email: javaftw@gmail.com | Cell: 079 352 4417  
+Sections: Introduction, Pipeline (QGIS→Three.js workflow), Skills, Contact
 
 ---
 
