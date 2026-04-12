@@ -73,10 +73,101 @@ let _isDragging      = false;
 let _dragPrevCenter  = null;
 let _prevXrayEnabled = null;  // null forces first-call sync
 
+// Tracks the full expanded height; updated when addMinimapLayers inserts the toolbar
+let _openHeight = MAP_H + 28;
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 export function initMinimap() {
     _buildDOM();
     _buildMap();
+}
+
+// Called from main.js once pipelines, reservoirs, and pump-stations GeoJSON are loaded.
+// Adds Leaflet overlays + a checkbox toolbar above the map.
+export function addMinimapLayers(pipelines, reservoirs, pumpStations) {
+    if (!_map) return;
+
+    // Coordinate conversion: UTM [E, N] → Leaflet LatLng
+    const toLatLng = (coords) => {
+        const [lat, lon] = utmToLatLon(coords[0], coords[1]);
+        return L.latLng(lat, lon);
+    };
+
+    // ── Pipe network (lines) ──────────────────────────────────────────────────
+    const pipeLayer = L.geoJSON(pipelines, {
+        coordsToLatLng: toLatLng,
+        style:          { color: '#0077aa', weight: 2.5, opacity: 0.85 },
+        interactive:    false,
+    }).addTo(_map);
+
+    // ── Reservoirs (filled circles) ───────────────────────────────────────────
+    const reservoirLayer = L.geoJSON(reservoirs, {
+        coordsToLatLng: toLatLng,
+        pointToLayer:   (_feat, latlng) => L.circleMarker(latlng, {
+            radius: 5, fillColor: '#00ccff', fillOpacity: 0.95,
+            color: '#000', weight: 1.5, interactive: false,
+        }),
+        interactive: false,
+    }).addTo(_map);
+
+    // ── Pump stations (squares) ───────────────────────────────────────────────
+    const pumpLayer = L.geoJSON(pumpStations, {
+        coordsToLatLng: toLatLng,
+        pointToLayer:   (_feat, latlng) => L.marker(latlng, {
+            icon: L.divIcon({
+                className: '',
+                html: `<div style="
+                    width:8px;height:8px;
+                    background:#00ccff;border:1.5px solid #000;
+                    position:relative;top:-4px;left:-4px;
+                "></div>`,
+                iconSize: [0, 0], iconAnchor: [0, 0],
+            }),
+            interactive:   false,
+            zIndexOffset: -500,  // keep below camera / cone markers
+        }),
+        interactive: false,
+    }).addTo(_map);
+
+    // ── Toolbar ───────────────────────────────────────────────────────────────
+    const toolbar = document.createElement('div');
+    toolbar.style.cssText = `
+        min-height: 28px;
+        background: #161616;
+        display: flex; align-items: center;
+        padding: 0 10px; gap: 16px;
+        border-bottom: 1px solid #333;
+        user-select: none;
+    `;
+
+    function makeCheckbox(label, layer) {
+        const lbl = document.createElement('label');
+        lbl.style.cssText = 'cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;color:#aaa;';
+        const cb = document.createElement('input');
+        cb.type    = 'checkbox';
+        cb.checked = true;
+        cb.style.cssText = 'cursor:pointer;accent-color:#00ccff;';
+        cb.addEventListener('change', () => {
+            if (cb.checked) layer.addTo(_map); else _map.removeLayer(layer);
+        });
+        const txt = document.createElement('span');
+        txt.textContent = label;
+        lbl.appendChild(cb);
+        lbl.appendChild(txt);
+        return lbl;
+    }
+
+    toolbar.appendChild(makeCheckbox('Pipelines',     pipeLayer));
+    toolbar.appendChild(makeCheckbox('Reservoirs',    reservoirLayer));
+    toolbar.appendChild(makeCheckbox('Pump Stations', pumpLayer));
+
+    // Insert toolbar between header (child 0) and map div (child 1)
+    const container = document.getElementById('minimap-container');
+    container.insertBefore(toolbar, container.children[1]);
+
+    // Grow open height to include the 28 px toolbar row
+    _openHeight = MAP_H + 28 + 28;
+    if (!_collapsed) container.style.height = `${_openHeight}px`;
 }
 
 export function updateMinimap(camera, cameraState, coneState) {
@@ -252,7 +343,7 @@ function _buildDOM() {
         overflow: hidden;
         z-index: 200;
         transition: height 0.3s ease;
-        height: ${MAP_H + 28}px;
+        height: ${_openHeight}px;
         display: flex;
         flex-direction: column;
         font-family: Arial, sans-serif;
@@ -447,7 +538,7 @@ function _toggleCollapse() {
         container.style.height = '28px';
         toggle.textContent = '▲';
     } else {
-        container.style.height = `${MAP_H + 28}px`;
+        container.style.height = `${_openHeight}px`;
         toggle.textContent = '▼';
         setTimeout(() => _map.invalidateSize(), 310);
     }
