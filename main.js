@@ -340,7 +340,7 @@ document.body.appendChild(reticule);
     const s = document.createElement('style');
     s.textContent = `
         @keyframes inspect-breathe {
-            0%, 100% { border-color: #2a2a2a; box-shadow: none; }
+            0%, 100% { border-color: #004455; box-shadow: none; }
             50%       { border-color: #00ccff; box-shadow: 0 0 10px rgba(0,204,255,0.25); }
         }`;
     document.head.appendChild(s);
@@ -568,8 +568,15 @@ inspectToggleInput.addEventListener('change', () => {
     inspectToggleTrack.style.background  = on ? '#00aaff' : '#444';
     inspectToggleThumb.style.transform   = `translateX(${on ? 16 : 0}px)`;
     renderer.domElement.style.cursor     = on ? 'pointer' : 'default';
-    inspectBody.parentElement.style.animation = on ? 'inspect-breathe 5s ease-in-out infinite' : '';
-    if (!on) inspectBody.parentElement.style.borderColor = '';
+    const panel = inspectBody.parentElement;
+    if (on) {
+        panel.style.borderWidth = '2px';
+        panel.style.animation   = 'inspect-breathe 5s ease-in-out infinite';
+    } else {
+        panel.style.animation   = '';
+        panel.style.borderColor = '#2a2a2a';
+        panel.style.borderWidth = '1px';
+    }
     if (!on) _clearInspect();
 });
 
