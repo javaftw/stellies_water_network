@@ -103,7 +103,10 @@ updateCamera();
 
 const domEl = renderer.domElement;
 
+let _mouseClickStart = { x: 0, y: 0 };
+
 domEl.addEventListener('mousedown', (e) => {
+    _mouseClickStart = { x: e.clientX, y: e.clientY };
     if (e.button === 0) { cameraState.isPanning  = true; }
     if (e.button === 2) { cameraState.isDragging = true; }
     cameraState.lastX = e.clientX;
@@ -174,6 +177,28 @@ domEl.addEventListener('wheel', (e) => {
 }, { passive: true });
 
 domEl.addEventListener('contextmenu', (e) => e.preventDefault());
+
+// Inspect-mode click — only fires when mouse hasn't moved more than 4 px (i.e. not a drag)
+domEl.addEventListener('click', (e) => {
+    if (!inspectState.active) return;
+    const dx = e.clientX - _mouseClickStart.x;
+    const dy = e.clientY - _mouseClickStart.y;
+    if (dx * dx + dy * dy > 16) return;
+    if (!pipeNetwork.mesh) return;
+    const ndcX =  (e.clientX / window.innerWidth)  * 2 - 1;
+    const ndcY = -(e.clientY / window.innerHeight) * 2 + 1;
+    _raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
+    const hits = _raycaster.intersectObject(pipeNetwork.mesh);
+    if (hits.length === 0) { _clearInspect(); return; }
+    const vi      = hits[0].index;
+    const feature = pipeNetwork.featureIndex.find(
+        f => vi >= f.vertexStart && vi < f.vertexStart + f.vertexCount
+    );
+    if (!feature) { _clearInspect(); return; }
+    inspectState.selectedFeature = feature;
+    _highlightFeature(feature);
+    _showFeatureInfo(feature);
+});
 
 // 5. Lighting
 const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
@@ -251,27 +276,24 @@ updateSun(0.5);
 initMinimap();
 
 
-// 6. UI — shared container for all sliders
-const uiContainer = document.createElement('div');
-uiContainer.style.cssText = `
+// 6. UI — collapsible panel stack (right side)
+const panelStack = document.createElement('div');
+panelStack.style.cssText = `
     position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: rgba(0,0,0,0.6);
-    padding: 12px 20px;
-    border-radius: 8px;
+    top: 20px;
+    right: 20px;
+    width: 400px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px;
     z-index: 50;
-    color: white;
     font-family: Arial, sans-serif;
     font-size: 14px;
+    color: white;
+    pointer-events: none;
 `;
-document.body.appendChild(uiContainer);
+document.body.appendChild(panelStack);
 
-//reticule
 // --- Reticule overlay ---
 const reticule = document.createElement('div');
 reticule.style.cssText = `
@@ -291,23 +313,63 @@ reticule.innerHTML = `
     </svg>`;
 document.body.appendChild(reticule);
 
+function makePanel(title, initiallyOpen = true) {
+    const panel = document.createElement('div');
+    panel.style.cssText = `
+        background: rgba(0,0,0,0.75);
+        border: 1px solid #2a2a2a;
+        border-radius: 6px;
+        overflow: hidden;
+        pointer-events: all;
+    `;
+    const header = document.createElement('div');
+    header.style.cssText = `
+        padding: 9px 14px;
+        cursor: pointer;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        user-select: none;
+        border-bottom: 1px solid #1a1a1a;
+    `;
+    const titleEl = document.createElement('span');
+    titleEl.textContent = title;
+    titleEl.style.cssText = 'font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:#999;';
+    const chevron = document.createElement('span');
+    chevron.textContent = initiallyOpen ? '▲' : '▼';
+    chevron.style.cssText = 'font-size:9px; color:#444;';
+    header.appendChild(titleEl);
+    header.appendChild(chevron);
+    const body = document.createElement('div');
+    body.style.cssText = `padding: 12px 14px 14px; display: ${initiallyOpen ? 'block' : 'none'};`;
+    header.addEventListener('click', () => {
+        const open = body.style.display !== 'none';
+        body.style.display = open ? 'none' : 'block';
+        chevron.textContent = open ? '▼' : '▲';
+    });
+    panel.appendChild(header);
+    panel.appendChild(body);
+    panelStack.appendChild(panel);
+    return body;
+}
+
 function makeSliderRow(labelText, min, max, value, onInput) {
     const row = document.createElement('div');
-    row.style.cssText = 'display:flex; align-items:center; gap:12px;';
+    row.style.cssText = 'display:flex; align-items:center; gap:10px;';
 
     const label = document.createElement('span');
     label.textContent = labelText;
-    label.style.minWidth = '130px';
+    label.style.cssText = 'min-width:110px; color:#ccc; font-size:13px; flex-shrink:0;';
 
     const input = document.createElement('input');
     input.type  = 'range';
     input.min   = String(min);
     input.max   = String(max);
     input.value = String(value);
-    input.style.cssText = 'width:220px; cursor:pointer;';
+    input.style.cssText = 'flex:1; cursor:pointer;';
 
     const readout = document.createElement('span');
-    readout.style.minWidth = '52px';
+    readout.style.cssText = 'min-width:48px; text-align:right; color:#aaa; font-size:13px;';
 
     input.addEventListener('input', () => onInput(input, readout));
 
@@ -318,7 +380,9 @@ function makeSliderRow(labelText, min, max, value, onInput) {
     return { input, readout, row };
 }
 
-// Time of day slider
+// --- Panel 1: Time of Day ---
+const todBody = makePanel('☀  Time of Day');
+
 function sliderToTimeString(val) {
     const totalMinutes = 6 * 60 + (Number(val) / 100) * 12 * 60;
     const hours   = Math.floor(totalMinutes / 60);
@@ -327,7 +391,7 @@ function sliderToTimeString(val) {
 }
 
 const { readout: timeReadout, row: timeRow } = makeSliderRow(
-    '☀  Time of Day',
+    'Time of Day',
     0, 100, 50,
     (input, readout) => {
         readout.textContent = sliderToTimeString(input.value);
@@ -337,13 +401,14 @@ const { readout: timeReadout, row: timeRow } = makeSliderRow(
     }
 );
 timeReadout.textContent = sliderToTimeString(50);
-uiContainer.appendChild(timeRow);
+todBody.appendChild(timeRow);
 
-// X-Ray cone slider + toggle
+// --- Panel 2: X-Ray View ---
+const xrayBody = makePanel('🔭  X-Ray View');
 const coneState = { halfAngleDeg: 25, xrayEnabled: true };
 
 const { input: coneSlider, readout: coneReadout, row: coneRow } = makeSliderRow(
-    '🔭  X-Ray View Cone Angle',
+    'Cone Angle',
     15, 35, 25,
     (input, readout) => {
         coneState.halfAngleDeg = Number(input.value);
@@ -351,17 +416,21 @@ const { input: coneSlider, readout: coneReadout, row: coneRow } = makeSliderRow(
     }
 );
 coneReadout.textContent = '25°';
+xrayBody.appendChild(coneRow);
 
-// Toggle switch — appended after the readout in the same row
-const toggleLabel = document.createElement('span');
-toggleLabel.textContent = 'X-Ray';
-toggleLabel.style.cssText = 'color:#aaa; font-size:13px; margin-left:8px; flex-shrink:0;';
+// X-Ray toggle row
+const xrayToggleRow = document.createElement('div');
+xrayToggleRow.style.cssText = 'display:flex; align-items:center; gap:10px; margin-top:10px;';
+
+const xrayToggleLabel = document.createElement('span');
+xrayToggleLabel.textContent = 'X-Ray';
+xrayToggleLabel.style.cssText = 'min-width:110px; color:#ccc; font-size:13px;';
 
 const toggleWrap = document.createElement('label');
 toggleWrap.title = 'Toggle X-Ray';
 toggleWrap.style.cssText = `
     position: relative; display: inline-block;
-    width: 36px; height: 20px; cursor: pointer; flex-shrink: 0; margin-left: 6px;
+    width: 36px; height: 20px; cursor: pointer; flex-shrink: 0;
 `;
 const toggleInput = document.createElement('input');
 toggleInput.type    = 'checkbox';
@@ -385,8 +454,9 @@ toggleThumb.style.cssText = `
 toggleTrack.appendChild(toggleThumb);
 toggleWrap.appendChild(toggleInput);
 toggleWrap.appendChild(toggleTrack);
-coneRow.appendChild(toggleLabel);
-coneRow.appendChild(toggleWrap);
+xrayToggleRow.appendChild(xrayToggleLabel);
+xrayToggleRow.appendChild(toggleWrap);
+xrayBody.appendChild(xrayToggleRow);
 
 function applyXrayToggle(enabled) {
     coneState.xrayEnabled            = enabled;
@@ -398,7 +468,77 @@ function applyXrayToggle(enabled) {
 }
 
 toggleInput.addEventListener('change', () => applyXrayToggle(toggleInput.checked));
-uiContainer.appendChild(coneRow);
+
+// --- Panel 3: Inspect Feature ---
+const inspectState = { active: false, selectedFeature: null };
+
+const inspectBody = makePanel('🔍  Inspect Feature');
+inspectBody.style.height   = '255px';
+inspectBody.style.overflow = 'hidden';
+inspectBody.style.paddingBottom = '0';
+
+const inspectToggleRow = document.createElement('div');
+inspectToggleRow.style.cssText = 'display:flex; align-items:center; gap:10px;';
+
+const inspectToggleLbl = document.createElement('span');
+inspectToggleLbl.textContent = 'Inspect Mode';
+inspectToggleLbl.style.cssText = 'min-width:110px; color:#ccc; font-size:13px;';
+
+const inspectToggleWrap = document.createElement('label');
+inspectToggleWrap.style.cssText = `
+    position: relative; display: inline-block;
+    width: 36px; height: 20px; cursor: pointer; flex-shrink: 0;
+`;
+const inspectToggleInput = document.createElement('input');
+inspectToggleInput.type    = 'checkbox';
+inspectToggleInput.checked = false;
+inspectToggleInput.style.cssText = 'opacity:0; width:0; height:0; position:absolute;';
+
+const inspectToggleTrack = document.createElement('span');
+inspectToggleTrack.style.cssText = `
+    position: absolute; inset: 0;
+    background: #444; border-radius: 20px;
+    transition: background 0.2s;
+`;
+const inspectToggleThumb = document.createElement('span');
+inspectToggleThumb.style.cssText = `
+    position: absolute; width: 14px; height: 14px;
+    background: white; border-radius: 50%;
+    top: 3px; left: 3px;
+    transition: transform 0.2s;
+    transform: translateX(0px);
+`;
+inspectToggleTrack.appendChild(inspectToggleThumb);
+inspectToggleWrap.appendChild(inspectToggleInput);
+inspectToggleWrap.appendChild(inspectToggleTrack);
+inspectToggleRow.appendChild(inspectToggleLbl);
+inspectToggleRow.appendChild(inspectToggleWrap);
+
+const inspectInfo = document.createElement('div');
+inspectInfo.style.cssText = `
+    margin-top: 10px;
+    padding: 10px;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid #1a1a1a;
+    border-radius: 4px;
+    height: calc(100% - 44px);
+    overflow-y: auto;
+    font-size: 13px;
+    color: #555;
+    line-height: 1.7;
+`;
+inspectInfo.textContent = 'Click a pipe segment to inspect.';
+
+inspectToggleInput.addEventListener('change', () => {
+    const on = inspectToggleInput.checked;
+    inspectState.active                  = on;
+    inspectToggleTrack.style.background  = on ? '#00aaff' : '#444';
+    inspectToggleThumb.style.transform   = `translateX(${on ? 16 : 0}px)`;
+    if (!on) _clearInspect();
+});
+
+inspectBody.appendChild(inspectToggleRow);
+inspectBody.appendChild(inspectInfo);
 
 // Clock for animations
 const clock = new THREE.Clock();
@@ -631,6 +771,54 @@ loader.load(
     undefined,
     (error) => console.error('Buildings error:', error)
 );
+
+// --- Pipe inspect: raycaster, highlight mesh, helpers ---
+const _raycaster = new THREE.Raycaster();
+_raycaster.params.Line = { threshold: 15 }; // world-unit pick radius for line segments
+
+const _highlightGeo  = new THREE.BufferGeometry();
+const _highlightMesh = new THREE.LineSegments(
+    _highlightGeo,
+    new THREE.LineBasicMaterial({ color: 0xff2222, depthTest: false })
+);
+_highlightMesh.renderOrder = 1;
+_highlightMesh.visible     = false;
+scene.add(_highlightMesh);
+
+function _clearInspect() {
+    _highlightMesh.visible         = false;
+    inspectState.selectedFeature   = null;
+    inspectInfo.style.color        = '#555';
+    inspectInfo.textContent        = 'Click a pipe segment to inspect.';
+}
+
+function _highlightFeature(feature) {
+    const srcPos = pipeNetwork.geometry.getAttribute('position');
+    const count  = feature.vertexCount;
+    const arr    = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+        arr[i * 3 + 0] = srcPos.getX(feature.vertexStart + i);
+        arr[i * 3 + 1] = srcPos.getY(feature.vertexStart + i);
+        arr[i * 3 + 2] = srcPos.getZ(feature.vertexStart + i);
+    }
+    _highlightGeo.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    _highlightMesh.visible = true;
+}
+
+function _showFeatureInfo(feature) {
+    const rows = [
+        ['FID',      feature.fid      != null ? String(feature.fid)      : '—'],
+        ['Material', feature.material != null ? String(feature.material) : '—'],
+        ['Diameter', feature.diam_mm  != null ? `${feature.diam_mm} mm`  : '—'],
+    ];
+    inspectInfo.style.color = '#e0e0e0';
+    inspectInfo.innerHTML = rows.map(([k, v]) =>
+        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1e1e;">
+            <span style="color:#666;">${k}</span>
+            <span style="color:#e0e0e0;font-weight:500;">${v}</span>
+         </div>`
+    ).join('');
+}
 
 // --- Load Water Pipes from GeoJSON ---
 fetch('pipelines_exported.geojson')
