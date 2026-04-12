@@ -231,8 +231,8 @@ scene.add(hemiLight);
 
 const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
 sunLight.castShadow = true;
-sunLight.shadow.mapSize.width  = 4096;
-sunLight.shadow.mapSize.height = 4096;
+sunLight.shadow.mapSize.width  = 8192;
+sunLight.shadow.mapSize.height = 8192;
 // Shadow frustum covers the full DEM extent (~10 km × 11 km, origin-centred).
 // Sun is placed at a fixed world position so the frustum never moves with the camera.
 // 4096 px over 12 000 units ≈ 2.9 m/texel — acceptable at city scale.
