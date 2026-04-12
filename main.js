@@ -562,6 +562,9 @@ inspectInfo.style.cssText = `
 `;
 inspectInfo.textContent = 'Click a pipeline, reservoir, or pump station to inspect.';
 
+// Tracks whether x-ray was already on before inspect mode forced it on
+let _xrayBeforeInspect = false;
+
 inspectToggleInput.addEventListener('change', () => {
     const on = inspectToggleInput.checked;
     inspectState.active                  = on;
@@ -573,13 +576,24 @@ inspectToggleInput.addEventListener('change', () => {
         panel.style.borderWidth = '2px';
         panel.style.animation   = 'inspect-breathe 5s ease-in-out infinite';
         panel.style.background  = 'rgba(0,40,50,0.85)';
+        // Force x-ray on; remember whether it was already on so we can restore later
+        _xrayBeforeInspect = coneState.xrayEnabled;
+        if (!coneState.xrayEnabled) {
+            toggleInput.checked = true;
+            applyXrayToggle(true);
+        }
     } else {
         panel.style.animation   = '';
         panel.style.borderColor = '#2a2a2a';
         panel.style.borderWidth = '1px';
         panel.style.background  = 'rgba(0,0,0,0.75)';
+        // Restore x-ray to its pre-inspect state only if we forced it on
+        if (!_xrayBeforeInspect) {
+            toggleInput.checked = false;
+            applyXrayToggle(false);
+        }
+        _clearInspect();
     }
-    if (!on) _clearInspect();
 });
 
 inspectBody.appendChild(inspectToggleRow);
