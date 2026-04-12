@@ -1027,7 +1027,7 @@ fetch('reservoirs.geojson')
             RESERVOIR_SEGMENTS
         );
 
-        const RESERVOIR_COLOR = 0x4488bb;  // mid steel blue
+        const RESERVOIR_COLOR = 0x00ccff;  // pipe animation bright blue
 
         geojson.features.forEach(feature => {
             const [ex, ny, ez = 0] = feature.geometry.coordinates;
@@ -1041,7 +1041,7 @@ fetch('reservoirs.geojson')
             // Clone material per mesh so inspect highlighting doesn't affect all instances
             const mesh = new THREE.Mesh(
                 reservoirGeom,
-                new THREE.MeshLambertMaterial({ color: RESERVOIR_COLOR })
+                new THREE.MeshBasicMaterial({ color: RESERVOIR_COLOR })
             );
             mesh.position.set(sceneX, sceneY, sceneZ);
             mesh.castShadow    = true;
@@ -1075,7 +1075,7 @@ fetch('pump_stations.geojson')
 
         const pumpGeom = new THREE.BoxGeometry(PS_LENGTH, PS_HEIGHT, PS_WIDTH);
 
-        const PUMP_COLOR = 0x882222;  // darkish red
+        const PUMP_COLOR = 0x00ccff;  // pipe animation bright blue
 
         geojson.features.forEach(feature => {
             const [ex, ny, ez = 0] = feature.geometry.coordinates;
@@ -1088,7 +1088,7 @@ fetch('pump_stations.geojson')
             // Clone material per mesh so inspect highlighting doesn't affect all instances
             const mesh = new THREE.Mesh(
                 pumpGeom,
-                new THREE.MeshLambertMaterial({ color: PUMP_COLOR })
+                new THREE.MeshBasicMaterial({ color: PUMP_COLOR })
             );
             mesh.position.set(sceneX, sceneY, sceneZ);
             mesh.castShadow    = true;
