@@ -856,17 +856,27 @@ function _showFeatureInfo(type, data) {
     };
     const heading = headings[type] ?? type.toUpperCase();
 
-    const rows = type === 'pipeline'
+    const rows =
+        type === 'pipeline'
         ? [
             ['FID',      data.fid      != null ? String(data.fid)      : '—'],
             ['Material', data.material != null ? String(data.material) : '—'],
             ['Diameter', data.diam_mm  != null ? `${data.diam_mm} mm`  : '—'],
           ]
-        : [
-            ['FID',  data.fid     != null ? String(data.fid)            : '—'],
-            ['Name', data.name    != null ? String(data.name)           : '—'],
-            ['Flow', data.flow_ls != null ? `${data.flow_ls} L/s`       : '—'],
-            ['Head', data.head_m  != null ? `${data.head_m} m`          : '—'],
+        : type === 'reservoir'
+        ? [
+            ['FID',      data.fid          != null ? String(data.fid)              : '—'],
+            ['Name',     data.name         != null ? String(data.name)             : '—'],
+            ['TWL',      data.twl_m        != null ? `${data.twl_m} m`             : '—'],
+            ['Capacity', data.capacity_kl  != null ? `${data.capacity_kl} kL`      : '—'],
+          ]
+        : /* pump_station */ [
+            ['FID',          data.fid            != null ? String(data.fid)            : '—'],
+            ['Name',         data.name           != null ? String(data.name)           : '—'],
+            ['Flow',         data.flow_ls        != null ? `${data.flow_ls} L/s`       : '—'],
+            ['Head',         data.head_m         != null ? `${data.head_m} m`          : '—'],
+            ['Suction Res',  data.suction_res_id != null ? String(data.suction_res_id) : '—'],
+            ['Delivery Res', data.delivery_rs_id != null ? String(data.delivery_rs_id) : '—'],
           ];
 
     inspectInfo.style.color = '#e0e0e0';
@@ -982,12 +992,12 @@ fetch('reservoirs.geojson')
             mesh.receiveShadow = true;
 
             mesh.userData = {
-                type:      'reservoir',
-                fid:       feature.properties.fid,
-                name:      feature.properties.name,
-                flow_ls:   feature.properties.flow_ls,
-                head_m:    feature.properties.head_m,
-                _origColor: RESERVOIR_COLOR,
+                type:        'reservoir',
+                fid:         feature.properties.fid,
+                name:        feature.properties.name,
+                twl_m:       feature.properties.twl_m,
+                capacity_kl: feature.properties.capacity_kl,
+                _origColor:  RESERVOIR_COLOR,
             };
 
             _inspectMeshes.push(mesh);
@@ -1029,12 +1039,14 @@ fetch('pump_stations.geojson')
             mesh.receiveShadow = true;
 
             mesh.userData = {
-                type:       'pump_station',
-                fid:        feature.properties.fid,
-                name:       feature.properties.name,
-                flow_ls:    feature.properties.flow_ls,
-                head_m:     feature.properties.head_m,
-                _origColor: PUMP_COLOR,
+                type:           'pump_station',
+                fid:            feature.properties.fid,
+                name:           feature.properties.name,
+                flow_ls:        feature.properties.flow_ls,
+                head_m:         feature.properties.head_m,
+                suction_res_id: feature.properties.suction_res_id,
+                delivery_rs_id: feature.properties.delivery_rs_id,
+                _origColor:     PUMP_COLOR,
             };
 
             _inspectMeshes.push(mesh);
