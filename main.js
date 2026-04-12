@@ -806,8 +806,9 @@ const _highlightMesh = new THREE.LineSegments(
     _highlightGeo,
     new THREE.LineBasicMaterial({ color: 0xff2222, depthTest: false })
 );
-_highlightMesh.renderOrder = 1;
-_highlightMesh.visible     = false;
+_highlightMesh.renderOrder  = 1;
+_highlightMesh.frustumCulled = false;
+_highlightMesh.visible       = false;
 scene.add(_highlightMesh);
 
 function _clearInspect() {
