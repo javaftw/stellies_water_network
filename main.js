@@ -628,9 +628,10 @@ function createPipeMaterial() {
             speed:         { value: 4.0 },
         },
         vertexShader: `
-            varying float vProgress;
+            attribute float lineArcLen;
+            varying float vArcLen;
             void main() {
-                vProgress = position.x + position.y + position.z;
+                vArcLen = lineArcLen;
                 gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
             }
         `,
@@ -640,9 +641,9 @@ function createPipeMaterial() {
             uniform vec3 colorB;
             uniform float bandFrequency;
             uniform float speed;
-            varying float vProgress;
+            varying float vArcLen;
             void main() {
-                float band = sin((vProgress * bandFrequency) - (time * speed));
+                float band = sin((vArcLen * bandFrequency) - (time * speed));
                 float t = band * 0.5 + 0.5;
                 vec3 color = mix(colorA, colorB, t);
                 gl_FragColor = vec4(color, 1.0);
@@ -924,6 +925,7 @@ fetch('pipelines_exported.geojson')
     .then(r => r.json())
     .then(geojson => {
         const positions  = [];
+        const arcLengths = [];  // per-vertex cumulative arc length along each feature
         let vertexCursor = 0;
 
         geojson.features.forEach(feature => {
@@ -936,12 +938,18 @@ fetch('pipelines_exported.geojson')
                 : [geom.coordinates];
 
             lines.forEach(line => {
+                let cumLen = 0;
                 for (let i = 0; i < line.length - 1; i++) {
                     const [ax, ay, az = 0] = line[i];
                     const [bx, by, bz = 0] = line[i + 1];
 
                     const a = qgisToThree(ax, ay, az);
                     const b = qgisToThree(bx, by, bz);
+
+                    // Arc-length at start vertex, then advance and record end vertex
+                    arcLengths.push(cumLen);
+                    cumLen += a.distanceTo(b);
+                    arcLengths.push(cumLen);
 
                     positions.push(a.x, a.y, a.z);
                     positions.push(b.x, b.y, b.z);
@@ -964,6 +972,10 @@ fetch('pipelines_exported.geojson')
         geometry.setAttribute(
             'position',
             new THREE.Float32BufferAttribute(positions, 3)
+        );
+        geometry.setAttribute(
+            'lineArcLen',
+            new THREE.Float32BufferAttribute(arcLengths, 1)
         );
 
         const material = createPipeMaterial();
