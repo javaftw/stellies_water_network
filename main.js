@@ -572,10 +572,12 @@ inspectToggleInput.addEventListener('change', () => {
     if (on) {
         panel.style.borderWidth = '2px';
         panel.style.animation   = 'inspect-breathe 5s ease-in-out infinite';
+        panel.style.background  = 'rgba(0,40,50,0.85)';
     } else {
         panel.style.animation   = '';
         panel.style.borderColor = '#2a2a2a';
         panel.style.borderWidth = '1px';
+        panel.style.background  = 'rgba(0,0,0,0.75)';
     }
     if (!on) _clearInspect();
 });
