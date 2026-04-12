@@ -184,20 +184,42 @@ domEl.addEventListener('click', (e) => {
     const dx = e.clientX - _mouseClickStart.x;
     const dy = e.clientY - _mouseClickStart.y;
     if (dx * dx + dy * dy > 16) return;
-    if (!pipeNetwork.mesh) return;
+
     const ndcX =  (e.clientX / window.innerWidth)  * 2 - 1;
     const ndcY = -(e.clientY / window.innerHeight) * 2 + 1;
     _raycaster.setFromCamera({ x: ndcX, y: ndcY }, camera);
-    const hits = _raycaster.intersectObject(pipeNetwork.mesh);
-    if (hits.length === 0) { _clearInspect(); return; }
-    const vi      = hits[0].index;
-    const feature = pipeNetwork.featureIndex.find(
-        f => vi >= f.vertexStart && vi < f.vertexStart + f.vertexCount
-    );
-    if (!feature) { _clearInspect(); return; }
-    inspectState.selectedFeature = feature;
-    _highlightFeature(feature);
-    _showFeatureInfo(feature);
+
+    // Hit-test solid meshes (reservoirs / pump stations) and pipes separately
+    const meshHits = _inspectMeshes.length > 0
+        ? _raycaster.intersectObjects(_inspectMeshes) : [];
+    const pipeHits = pipeNetwork.mesh
+        ? _raycaster.intersectObject(pipeNetwork.mesh) : [];
+
+    // Nothing hit — clear selection
+    if (meshHits.length === 0 && pipeHits.length === 0) { _clearInspect(); return; }
+
+    // Pick closest hit across both sets
+    const meshDist = meshHits.length > 0 ? meshHits[0].distance : Infinity;
+    const pipeDist = pipeHits.length  > 0 ? pipeHits[0].distance  : Infinity;
+
+    if (meshDist <= pipeDist) {
+        // --- Solid mesh selected ---
+        const hitMesh = meshHits[0].object;
+        _clearInspect();
+        _highlightSceneMesh(hitMesh);
+        _showFeatureInfo(hitMesh.userData.type, hitMesh.userData);
+    } else {
+        // --- Pipe segment selected ---
+        const vi      = pipeHits[0].index;
+        const feature = pipeNetwork.featureIndex.find(
+            f => vi >= f.vertexStart && vi < f.vertexStart + f.vertexCount
+        );
+        if (!feature) { _clearInspect(); return; }
+        _clearInspect();
+        _highlightPipe(feature);
+        inspectState.selectedFeature = feature;
+        _showFeatureInfo('pipeline', feature);
+    }
 });
 
 // 5. Lighting
@@ -470,7 +492,7 @@ function applyXrayToggle(enabled) {
 toggleInput.addEventListener('change', () => applyXrayToggle(toggleInput.checked));
 
 // --- Panel 3: Inspect Feature ---
-const inspectState = { active: false, selectedFeature: null };
+const inspectState = { active: false, selectedFeature: null, selectedMesh: null };
 
 const inspectBody = makePanel('🔍  Inspect Feature');
 inspectBody.style.height   = '255px';
@@ -527,7 +549,7 @@ inspectInfo.style.cssText = `
     color: #555;
     line-height: 1.7;
 `;
-inspectInfo.textContent = 'Click a pipe segment to inspect.';
+inspectInfo.textContent = 'Click a pipeline, reservoir, or pump station to inspect.';
 
 inspectToggleInput.addEventListener('change', () => {
     const on = inspectToggleInput.checked;
@@ -558,6 +580,9 @@ const pipeNetwork = {
     featureIndex: [],
     geometry:     null,
 };
+
+// Inspectable 3-D meshes (reservoirs + pump stations) — populated as assets load
+const _inspectMeshes = [];
 
 // Coordinate origin and DEM bounds imported from constants.js
 
@@ -786,13 +811,21 @@ _highlightMesh.visible     = false;
 scene.add(_highlightMesh);
 
 function _clearInspect() {
-    _highlightMesh.visible         = false;
-    inspectState.selectedFeature   = null;
-    inspectInfo.style.color        = '#555';
-    inspectInfo.textContent        = 'Click a pipe segment to inspect.';
+    // Restore pipe highlight
+    _highlightMesh.visible = false;
+    // Restore 3-D mesh colour
+    if (inspectState.selectedMesh) {
+        inspectState.selectedMesh.material.color.setHex(
+            inspectState.selectedMesh.userData._origColor
+        );
+        inspectState.selectedMesh = null;
+    }
+    inspectState.selectedFeature = null;
+    inspectInfo.style.color      = '#555';
+    inspectInfo.textContent      = 'Click a pipeline, reservoir, or pump station to inspect.';
 }
 
-function _highlightFeature(feature) {
+function _highlightPipe(feature) {
     const srcPos = pipeNetwork.geometry.getAttribute('position');
     const count  = feature.vertexCount;
     const arr    = new Float32Array(count * 3);
@@ -805,19 +838,49 @@ function _highlightFeature(feature) {
     _highlightMesh.visible = true;
 }
 
-function _showFeatureInfo(feature) {
-    const rows = [
-        ['FID',      feature.fid      != null ? String(feature.fid)      : '—'],
-        ['Material', feature.material != null ? String(feature.material) : '—'],
-        ['Diameter', feature.diam_mm  != null ? `${feature.diam_mm} mm`  : '—'],
-    ];
+function _highlightSceneMesh(mesh) {
+    if (inspectState.selectedMesh && inspectState.selectedMesh !== mesh) {
+        inspectState.selectedMesh.material.color.setHex(
+            inspectState.selectedMesh.userData._origColor
+        );
+    }
+    mesh.material.color.setHex(0xff2222);
+    inspectState.selectedMesh = mesh;
+}
+
+function _showFeatureInfo(type, data) {
+    const headings = {
+        pipeline:     'PIPELINE',
+        reservoir:    'RESERVOIR',
+        pump_station: 'PUMP STATION',
+    };
+    const heading = headings[type] ?? type.toUpperCase();
+
+    const rows = type === 'pipeline'
+        ? [
+            ['FID',      data.fid      != null ? String(data.fid)      : '—'],
+            ['Material', data.material != null ? String(data.material) : '—'],
+            ['Diameter', data.diam_mm  != null ? `${data.diam_mm} mm`  : '—'],
+          ]
+        : [
+            ['FID',  data.fid     != null ? String(data.fid)            : '—'],
+            ['Name', data.name    != null ? String(data.name)           : '—'],
+            ['Flow', data.flow_ls != null ? `${data.flow_ls} L/s`       : '—'],
+            ['Head', data.head_m  != null ? `${data.head_m} m`          : '—'],
+          ];
+
     inspectInfo.style.color = '#e0e0e0';
-    inspectInfo.innerHTML = rows.map(([k, v]) =>
-        `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1e1e;">
-            <span style="color:#666;">${k}</span>
-            <span style="color:#e0e0e0;font-weight:500;">${v}</span>
-         </div>`
-    ).join('');
+    inspectInfo.innerHTML =
+        `<div style="font-size:11px;font-weight:700;letter-spacing:0.1em;color:#00ccff;
+                     margin-bottom:8px;padding-bottom:6px;border-bottom:1px solid #333;">
+            ${heading}
+         </div>` +
+        rows.map(([k, v]) =>
+            `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1e1e;">
+                <span style="color:#666;">${k}</span>
+                <span style="color:#e0e0e0;font-weight:500;">${v}</span>
+             </div>`
+        ).join('');
 }
 
 // --- Load Water Pipes from GeoJSON ---
@@ -898,9 +961,7 @@ fetch('reservoirs.geojson')
             RESERVOIR_SEGMENTS
         );
 
-        const reservoirMaterial = new THREE.MeshLambertMaterial({
-            color: 0x4488bb,   // mid steel blue
-        });
+        const RESERVOIR_COLOR = 0x4488bb;  // mid steel blue
 
         geojson.features.forEach(feature => {
             const [ex, ny, ez = 0] = feature.geometry.coordinates;
@@ -911,19 +972,25 @@ fetch('reservoirs.geojson')
             // Cylinder origin is at its centre, so raise by half-height so base sits on terrain.
             const sceneY = ez + RESERVOIR_HEIGHT / 2;
 
-            const mesh = new THREE.Mesh(reservoirGeom, reservoirMaterial);
+            // Clone material per mesh so inspect highlighting doesn't affect all instances
+            const mesh = new THREE.Mesh(
+                reservoirGeom,
+                new THREE.MeshLambertMaterial({ color: RESERVOIR_COLOR })
+            );
             mesh.position.set(sceneX, sceneY, sceneZ);
             mesh.castShadow    = true;
             mesh.receiveShadow = true;
 
             mesh.userData = {
-                type:    'reservoir',
-                fid:     feature.properties.fid,
-                name:    feature.properties.name,
-                flow_ls: feature.properties.flow_ls,
-                head_m:  feature.properties.head_m,
+                type:      'reservoir',
+                fid:       feature.properties.fid,
+                name:      feature.properties.name,
+                flow_ls:   feature.properties.flow_ls,
+                head_m:    feature.properties.head_m,
+                _origColor: RESERVOIR_COLOR,
             };
 
+            _inspectMeshes.push(mesh);
             scene.add(mesh);
         });
 
@@ -942,9 +1009,7 @@ fetch('pump_stations.geojson')
 
         const pumpGeom = new THREE.BoxGeometry(PS_LENGTH, PS_HEIGHT, PS_WIDTH);
 
-        const pumpMaterial = new THREE.MeshLambertMaterial({
-            color: 0x882222,   // darkish red
-        });
+        const PUMP_COLOR = 0x882222;  // darkish red
 
         geojson.features.forEach(feature => {
             const [ex, ny, ez = 0] = feature.geometry.coordinates;
@@ -954,19 +1019,25 @@ fetch('pump_stations.geojson')
             // Base sits on terrain surface — no ELEVATION_OFFSET, lift by half-height
             const sceneY = ez + PS_HEIGHT / 2;
 
-            const mesh = new THREE.Mesh(pumpGeom, pumpMaterial);
+            // Clone material per mesh so inspect highlighting doesn't affect all instances
+            const mesh = new THREE.Mesh(
+                pumpGeom,
+                new THREE.MeshLambertMaterial({ color: PUMP_COLOR })
+            );
             mesh.position.set(sceneX, sceneY, sceneZ);
             mesh.castShadow    = true;
             mesh.receiveShadow = true;
 
             mesh.userData = {
-                type:    'pump_station',
-                fid:     feature.properties.fid,
-                name:    feature.properties.name,
-                flow_ls: feature.properties.flow_ls,
-                head_m:  feature.properties.head_m,
+                type:       'pump_station',
+                fid:        feature.properties.fid,
+                name:       feature.properties.name,
+                flow_ls:    feature.properties.flow_ls,
+                head_m:     feature.properties.head_m,
+                _origColor: PUMP_COLOR,
             };
 
+            _inspectMeshes.push(mesh);
             scene.add(mesh);
         });
 
