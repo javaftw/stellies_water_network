@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { initTerrain, getTerrainMesh, sampleTerrainElevation } from './terrain.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { initMinimap, updateMinimap } from './minimap.js';
+import { initMinimap, updateMinimap, addMinimapLayers } from './minimap.js';
 import { ORIGIN_X, ORIGIN_Y } from './constants.js';
 import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
@@ -300,6 +300,15 @@ updateSun(0.5);
 
 //initialize the mini-map
 initMinimap();
+
+// GeoJSON data collected as it loads — addMinimapLayers called once all three are ready
+const _minimapGeoJSON = { pipelines: null, reservoirs: null, pumpStations: null };
+function _tryAddMinimapLayers() {
+    const { pipelines, reservoirs, pumpStations } = _minimapGeoJSON;
+    if (pipelines && reservoirs && pumpStations) {
+        addMinimapLayers(pipelines, reservoirs, pumpStations);
+    }
+}
 
 
 // 6. UI — collapsible panel stack (right side)
@@ -1018,6 +1027,8 @@ fetch('pipelines_exported.geojson')
 
         console.log(`Pipes loaded — ${pipeNetwork.featureIndex.length} features`);
         console.log('Sample feature:', pipeNetwork.featureIndex[0]);
+        _minimapGeoJSON.pipelines = geojson;
+        _tryAddMinimapLayers();
         taskDone('pipelines');
     })
     .catch(err => { console.error('GeoJSON load error:', err); taskDone('pipelines'); });
@@ -1071,6 +1082,8 @@ fetch('reservoirs.geojson')
         });
 
         console.log(`Reservoirs loaded — ${geojson.features.length} features`);
+        _minimapGeoJSON.reservoirs = geojson;
+        _tryAddMinimapLayers();
         taskSubDone('infrastructure');
     })
     .catch(err => { console.error('Reservoir GeoJSON load error:', err); taskSubDone('infrastructure'); });
@@ -1120,6 +1133,8 @@ fetch('pump_stations.geojson')
         });
 
         console.log(`Pump stations loaded — ${geojson.features.length} features`);
+        _minimapGeoJSON.pumpStations = geojson;
+        _tryAddMinimapLayers();
         taskSubDone('infrastructure');
     })
     .catch(err => { console.error('Pump station GeoJSON load error:', err); taskSubDone('infrastructure'); });
