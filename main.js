@@ -913,8 +913,8 @@ function _showFeatureInfo(type, data) {
          </div>` +
         rows.map(([k, v]) =>
             `<div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid #1e1e1e;">
-                <span style="color:#666;">${k}</span>
-                <span style="color:#e0e0e0;font-weight:500;">${v}</span>
+                <span style="color:#00ccff;font-weight:700;">${k}</span>
+                <span style="color:#ffffff;font-weight:400;">${v}</span>
              </div>`
         ).join('');
 }
