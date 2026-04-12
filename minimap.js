@@ -76,10 +76,69 @@ let _prevXrayEnabled = null;  // null forces first-call sync
 // Tracks the full expanded height; updated when addMinimapLayers inserts the toolbar
 let _openHeight = MAP_H + 28;
 
+// Highlight layer — replaced each time a feature is selected, removed on clear
+let _highlightLayer = null;
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 export function initMinimap() {
     _buildDOM();
     _buildMap();
+}
+
+// Highlight a single GeoJSON feature (passed from inspect mode in main.js).
+// type: 'pipeline' | 'reservoir' | 'pump_station'
+export function highlightMinimapFeature(geoJsonFeature, type) {
+    if (!_map) return;
+    if (_highlightLayer) { _map.removeLayer(_highlightLayer); _highlightLayer = null; }
+
+    const toLatLng = (coords) => {
+        const [lat, lon] = utmToLatLon(coords[0], coords[1]);
+        return L.latLng(lat, lon);
+    };
+
+    if (type === 'pipeline') {
+        _highlightLayer = L.geoJSON(geoJsonFeature, {
+            coordsToLatLng: toLatLng,
+            style: { color: '#ffee00', weight: 4, opacity: 1 },
+            interactive: false,
+        });
+    } else if (type === 'reservoir') {
+        _highlightLayer = L.geoJSON(geoJsonFeature, {
+            coordsToLatLng: toLatLng,
+            pointToLayer: (_feat, latlng) => L.circleMarker(latlng, {
+                radius: 9, fillColor: '#ffee00', fillOpacity: 0.95,
+                color: '#000', weight: 1.5, interactive: false,
+            }),
+            interactive: false,
+        });
+    } else if (type === 'pump_station') {
+        _highlightLayer = L.geoJSON(geoJsonFeature, {
+            coordsToLatLng: toLatLng,
+            pointToLayer: (_feat, latlng) => L.marker(latlng, {
+                icon: L.divIcon({
+                    className: '',
+                    html: `<div style="
+                        width:10px;height:10px;
+                        background:#ffee00;border:1.5px solid #000;
+                        position:relative;top:-5px;left:-5px;
+                    "></div>`,
+                    iconSize: [0, 0], iconAnchor: [0, 0],
+                }),
+                interactive: false,
+                zIndexOffset: 500,
+            }),
+            interactive: false,
+        });
+    }
+
+    if (_highlightLayer) _highlightLayer.addTo(_map);
+}
+
+// Remove any active highlight from the minimap.
+export function clearMinimapHighlight() {
+    if (!_map || !_highlightLayer) return;
+    _map.removeLayer(_highlightLayer);
+    _highlightLayer = null;
 }
 
 // Called from main.js once pipelines, reservoirs, and pump-stations GeoJSON are loaded.

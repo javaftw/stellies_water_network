@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { initTerrain, getTerrainMesh, sampleTerrainElevation } from './terrain.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { initMinimap, updateMinimap, addMinimapLayers } from './minimap.js';
+import { initMinimap, updateMinimap, addMinimapLayers, highlightMinimapFeature, clearMinimapHighlight } from './minimap.js';
 import { ORIGIN_X, ORIGIN_Y } from './constants.js';
 import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
@@ -887,6 +887,7 @@ function _clearInspect() {
     inspectState.selectedFeature = null;
     inspectInfo.style.color      = '#555';
     inspectInfo.textContent      = 'Click a pipeline, reservoir, or pump station to inspect.';
+    clearMinimapHighlight();
 }
 
 function _highlightPipe(feature) {
@@ -900,6 +901,7 @@ function _highlightPipe(feature) {
     }
     _highlightGeo.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
     _highlightMesh.visible = true;
+    highlightMinimapFeature(feature.geoJsonFeature, 'pipeline');
 }
 
 function _highlightSceneMesh(mesh) {
@@ -910,6 +912,7 @@ function _highlightSceneMesh(mesh) {
     }
     mesh.material.color.setHex(0xff2222);
     inspectState.selectedMesh = mesh;
+    highlightMinimapFeature(mesh.userData.geoJsonFeature, mesh.userData.type);
 }
 
 function _showFeatureInfo(type, data) {
@@ -997,11 +1000,12 @@ fetch('pipelines_exported.geojson')
             const vertexCount = vertexCursor - vertexStart;
 
             pipeNetwork.featureIndex.push({
-                fid:      props.fid      ?? null,
-                material: props.material ?? null,
-                diam_mm:  props.diam_mm  ?? null,
+                fid:          props.fid      ?? null,
+                material:     props.material ?? null,
+                diam_mm:      props.diam_mm  ?? null,
                 vertexStart,
                 vertexCount,
+                geoJsonFeature: feature,
             });
         });
 
@@ -1069,12 +1073,13 @@ fetch('reservoirs.geojson')
             mesh.receiveShadow = true;
 
             mesh.userData = {
-                type:        'reservoir',
-                fid:         feature.properties.fid,
-                name:        feature.properties.name,
-                twl_m:       feature.properties.twl_m,
-                capacity_kl: feature.properties.capacity_kl,
-                _origColor:  RESERVOIR_COLOR,
+                type:           'reservoir',
+                fid:            feature.properties.fid,
+                name:           feature.properties.name,
+                twl_m:          feature.properties.twl_m,
+                capacity_kl:    feature.properties.capacity_kl,
+                _origColor:     RESERVOIR_COLOR,
+                geoJsonFeature: feature,
             };
 
             _inspectMeshes.push(mesh);
@@ -1126,6 +1131,7 @@ fetch('pump_stations.geojson')
                 suction_res_id: feature.properties.suction_res_id,
                 delivery_rs_id: feature.properties.delivery_rs_id,
                 _origColor:     PUMP_COLOR,
+                geoJsonFeature: feature,
             };
 
             _inspectMeshes.push(mesh);
