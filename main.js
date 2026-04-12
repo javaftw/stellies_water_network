@@ -603,6 +603,16 @@ inspectToggleInput.addEventListener('change', () => {
 inspectBody.appendChild(inspectToggleRow);
 inspectBody.appendChild(inspectInfo);
 
+// Collapsing the inspect panel while active turns inspect mode off.
+// makePanel's header listener fires first and hides the body, so by the
+// time this listener runs display is already 'none' when collapsing.
+inspectBody.previousElementSibling.addEventListener('click', () => {
+    if (inspectBody.style.display === 'none' && inspectState.active) {
+        inspectToggleInput.checked = false;
+        inspectToggleInput.dispatchEvent(new Event('change'));
+    }
+});
+
 // Clock for animations
 const clock = new THREE.Clock();
 
