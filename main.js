@@ -556,6 +556,7 @@ inspectToggleInput.addEventListener('change', () => {
     inspectState.active                  = on;
     inspectToggleTrack.style.background  = on ? '#00aaff' : '#444';
     inspectToggleThumb.style.transform   = `translateX(${on ? 16 : 0}px)`;
+    renderer.domElement.style.cursor     = on ? 'pointer' : 'default';
     if (!on) _clearInspect();
 });
 
