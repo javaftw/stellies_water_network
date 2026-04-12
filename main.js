@@ -335,6 +335,17 @@ reticule.innerHTML = `
     </svg>`;
 document.body.appendChild(reticule);
 
+// Keyframe for inspect-panel border breathing
+(() => {
+    const s = document.createElement('style');
+    s.textContent = `
+        @keyframes inspect-breathe {
+            0%, 100% { border-color: #2a2a2a; box-shadow: none; }
+            50%       { border-color: #00ccff; box-shadow: 0 0 10px rgba(0,204,255,0.25); }
+        }`;
+    document.head.appendChild(s);
+})();
+
 function makePanel(title, initiallyOpen = true) {
     const panel = document.createElement('div');
     panel.style.cssText = `
@@ -557,6 +568,8 @@ inspectToggleInput.addEventListener('change', () => {
     inspectToggleTrack.style.background  = on ? '#00aaff' : '#444';
     inspectToggleThumb.style.transform   = `translateX(${on ? 16 : 0}px)`;
     renderer.domElement.style.cursor     = on ? 'pointer' : 'default';
+    inspectBody.parentElement.style.animation = on ? 'inspect-breathe 5s ease-in-out infinite' : '';
+    if (!on) inspectBody.parentElement.style.borderColor = '';
     if (!on) _clearInspect();
 });
 
