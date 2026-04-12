@@ -99,14 +99,14 @@ export function highlightMinimapFeature(geoJsonFeature, type) {
     if (type === 'pipeline') {
         _highlightLayer = L.geoJSON(geoJsonFeature, {
             coordsToLatLng: toLatLng,
-            style: { color: '#ffee00', weight: 4, opacity: 1 },
+            style: { color: '#ff2222', weight: 4, opacity: 1 },
             interactive: false,
         });
     } else if (type === 'reservoir') {
         _highlightLayer = L.geoJSON(geoJsonFeature, {
             coordsToLatLng: toLatLng,
             pointToLayer: (_feat, latlng) => L.circleMarker(latlng, {
-                radius: 9, fillColor: '#ffee00', fillOpacity: 0.95,
+                radius: 9, fillColor: '#ff2222', fillOpacity: 0.95,
                 color: '#000', weight: 1.5, interactive: false,
             }),
             interactive: false,
@@ -119,7 +119,7 @@ export function highlightMinimapFeature(geoJsonFeature, type) {
                     className: '',
                     html: `<div style="
                         width:10px;height:10px;
-                        background:#ffee00;border:1.5px solid #000;
+                        background:#ff2222;border:1.5px solid #000;
                         position:relative;top:-5px;left:-5px;
                     "></div>`,
                     iconSize: [0, 0], iconAnchor: [0, 0],
