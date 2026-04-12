@@ -233,13 +233,17 @@ const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width  = 4096;
 sunLight.shadow.mapSize.height = 4096;
-sunLight.shadow.camera.near   = 10;
-sunLight.shadow.camera.far    = 8000;
-sunLight.shadow.camera.left   = -1500;
-sunLight.shadow.camera.right  =  1500;
-sunLight.shadow.camera.top    =  1500;
-sunLight.shadow.camera.bottom = -1500;
-sunLight.shadow.bias = -0.0005;
+// Shadow frustum covers the full DEM extent (~10 km × 11 km, origin-centred).
+// Sun is placed at a fixed world position so the frustum never moves with the camera.
+// 4096 px over 12 000 units ≈ 2.9 m/texel — acceptable at city scale.
+sunLight.shadow.camera.near   = 1;
+sunLight.shadow.camera.far    = 14000;
+sunLight.shadow.camera.left   = -6000;
+sunLight.shadow.camera.right  =  6000;
+sunLight.shadow.camera.top    =  6000;
+sunLight.shadow.camera.bottom = -6000;
+sunLight.shadow.camera.updateProjectionMatrix();
+sunLight.shadow.bias = -0.001;
 scene.add(sunLight);
 scene.add(sunLight.target);
 
@@ -1282,10 +1286,9 @@ function animate() {
 
     const elapsed = clock.getElapsedTime();
 
-    // Re-centre shadow frustum on camera target
-    const target = cameraState.target;
-    sunLight.position.copy(sunDirection).multiplyScalar(2000).add(target);
-    sunLight.target.position.copy(target);
+    // Sun at a fixed world position — never follows the camera, so shadows stay still.
+    // Target remains at the world origin (default); only direction changes with TOD slider.
+    sunLight.position.copy(sunDirection).multiplyScalar(7000);
     sunLight.target.updateMatrixWorld();
 
     // Compute camera forward direction
