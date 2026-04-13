@@ -420,6 +420,16 @@ function _buildNarrative() {
     contact.appendChild(contactBody);
     frag.appendChild(contact);
 
+    // Claude Code credit
+    const claudeNote = document.createElement('p');
+    claudeNote.textContent = 'This viewer was developed with the assistance of Claude Code by Anthropic.';
+    claudeNote.style.cssText = `
+        font-size: 12px; color: #333;
+        line-height: 1.6; margin-bottom: 48px;
+        font-style: italic;
+    `;
+    frag.appendChild(claudeNote);
+
     return frag;
 }
 
