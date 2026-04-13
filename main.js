@@ -1775,11 +1775,17 @@ function _createGuideOverlay() {
     document.body.appendChild(overlay);
 }
 
+// Accumulated pipe animation time — advances at demand-scaled rate each frame
+let _pipeTime     = 0;
+let _lastFrameTime = 0;
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
 
     const elapsed = clock.getElapsedTime();
+    const delta   = elapsed - _lastFrameTime;
+    _lastFrameTime = elapsed;
 
     // Sun at a fixed world position — never follows the camera, so shadows stay still.
     // Target remains at the world origin (default); only direction changes with TOD slider.
@@ -1801,9 +1807,12 @@ function animate() {
         u.xrayEnabled.value   = coneState.xrayEnabled ? 1.0 : 0.0;
     }
 
-    // Animate pipes
+    // Animate pipes — speed scales with demand (0.15× at min, 1.0× at peak)
     if (pipeNetwork.mesh) {
-        pipeNetwork.mesh.material.uniforms.time.value = elapsed;
+        const demand = _computeHydro(_currentTimeT).demand;
+        const speedScale = 0.15 + demand * 0.85;
+        _pipeTime += delta * speedScale;
+        pipeNetwork.mesh.material.uniforms.time.value = _pipeTime;
     }
 
     // Keep building lights in sync with current time slider value
