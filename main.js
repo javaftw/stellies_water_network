@@ -11,6 +11,7 @@ initLoadingScreen();
 
 window.addEventListener('loading-complete', () => {
     console.log('[Main] Loading overlay dismissed.');
+    _createGuideOverlay();
 }, { once: true });
 
 // 1. Scene setup
@@ -1431,6 +1432,128 @@ function onWindowResize() {
 
 // Reusable vector for camera forward direction
 const camForward = new THREE.Vector3();
+
+// ── Guide overlay — shown once after the loading screen is dismissed ──────────
+function _createGuideOverlay() {
+    const overlay = document.createElement('div');
+    overlay.style.cssText = `
+        position: fixed; inset: 0; z-index: 900;
+        background: rgba(0,0,0,0.55);
+        pointer-events: all;
+        font-family: Arial, sans-serif;
+    `;
+
+    // ── Centre card ──────────────────────────────────────────────────────────
+    const card = document.createElement('div');
+    card.style.cssText = `
+        position: absolute; left: 50%; top: 50%;
+        transform: translate(-50%, -50%);
+        background: #111; border: 1px solid #333; border-radius: 8px;
+        padding: 36px 44px; max-width: 400px; text-align: center; color: #e0e0e0;
+        pointer-events: all;
+    `;
+    card.innerHTML = `
+        <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;letter-spacing:0.03em;">
+            Stellenbosch Water Infrastructure
+        </div>
+        <div style="font-size:13px;color:#999;line-height:1.75;margin-bottom:26px;">
+            A real-time 3D viewer of Stellenbosch's municipal water network,
+            built from QGIS-processed GIS data.<br><br>
+            Use the panels on the right to explore lighting, x-ray terrain,
+            inspect features, and filter pipelines.
+            The minimap in the bottom-left mirrors your view and supports click-to-navigate.
+        </div>
+        <button id="guide-dismiss" style="
+            background:transparent; border:1px solid #00ccff; color:#00ccff;
+            padding:8px 30px; border-radius:4px; font-size:13px;
+            cursor:pointer; letter-spacing:0.08em;
+        ">Explore  →</button>
+    `;
+    overlay.appendChild(card);
+
+    // Button hover glow
+    const btn = card.querySelector('#guide-dismiss');
+    btn.addEventListener('mouseover', () => { btn.style.background = 'rgba(0,204,255,0.1)'; });
+    btn.addEventListener('mouseout',  () => { btn.style.background = 'transparent'; });
+    btn.addEventListener('click',     () => overlay.remove());
+
+    // ── Annotation helper ─────────────────────────────────────────────────────
+    // dir 'right': box + right-pointing tip  (for right-side panels)
+    // dir 'left':  left-pointing tip + box   (for minimap on the left)
+    function makeAnnotation(text, dir) {
+        const wrap = document.createElement('div');
+        wrap.style.cssText = `position:absolute; display:flex; align-items:center; pointer-events:none;`;
+
+        const BOX_BG    = 'rgba(160,0,0,0.88)';
+        const TIP_COLOR = 'rgba(160,0,0,0.88)';
+
+        const box = document.createElement('div');
+        box.style.cssText = `
+            background:${BOX_BG}; border:1px solid #ff5555; border-radius:4px;
+            padding:5px 11px; color:#fff; font-size:12px; white-space:nowrap; line-height:1.5;
+        `;
+        box.textContent = text;
+
+        const tip = document.createElement('div');
+        if (dir === 'right') {
+            tip.style.cssText = `
+                width:0; height:0; flex-shrink:0;
+                border-top:7px solid transparent; border-bottom:7px solid transparent;
+                border-left:11px solid ${TIP_COLOR};
+            `;
+            wrap.appendChild(box);
+            wrap.appendChild(tip);
+        } else {
+            tip.style.cssText = `
+                width:0; height:0; flex-shrink:0;
+                border-top:7px solid transparent; border-bottom:7px solid transparent;
+                border-right:11px solid ${TIP_COLOR};
+            `;
+            wrap.appendChild(tip);
+            wrap.appendChild(box);
+        }
+
+        overlay.appendChild(wrap);
+        return wrap;
+    }
+
+    // ── Panel annotations ─────────────────────────────────────────────────────
+    const PANEL_HINTS = [
+        { body: todBody,     text: 'Adjust time of day & lighting'       },
+        { body: xrayBody,    text: 'X-ray terrain to reveal pipes below'  },
+        { body: inspectBody, text: 'Click any feature to inspect it'      },
+        { body: filterBody,  text: 'Filter pipes by material or diameter' },
+    ];
+    const panelAnns = PANEL_HINTS.map(({ body, text }) => ({
+        el: makeAnnotation(text, 'right'), body,
+    }));
+
+    // ── Minimap annotation ────────────────────────────────────────────────────
+    const minimapAnn = makeAnnotation('2D overview — click or drag to navigate', 'left');
+
+    // ── Position everything after the browser has laid out ────────────────────
+    requestAnimationFrame(() => {
+        // Panel annotations: right edge of annotation flush with left edge of panel stack, minus gap
+        const stackLeft = todBody.parentElement.parentElement.getBoundingClientRect().left;
+        const rightOffset = window.innerWidth - stackLeft + 10;  // CSS right value
+
+        for (const { el, body } of panelAnns) {
+            const r = body.parentElement.getBoundingClientRect();
+            el.style.right = `${rightOffset}px`;
+            el.style.top   = `${r.top + 9}px`;  // align with panel header
+        }
+
+        // Minimap annotation: just to the right of the minimap, vertically centred
+        const mm = document.getElementById('minimap-container');
+        if (mm) {
+            const r = mm.getBoundingClientRect();
+            minimapAnn.style.left = `${r.right + 10}px`;
+            minimapAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
+        }
+    });
+
+    document.body.appendChild(overlay);
+}
 
 // Animation loop
 function animate() {
