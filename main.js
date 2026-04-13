@@ -1658,6 +1658,10 @@ function _createGuideOverlay() {
             background:#0a0a0a; border:1px solid #222; border-radius:6px;
             padding:12px 16px; margin-bottom:22px; text-align:left;
         ">
+            <div style="display:flex;align-items:flex-start;gap:14px;">
+            <img src="mouse_controls.png" alt="Mouse controls diagram"
+                 style="height:110px;width:auto;opacity:0.85;flex-shrink:0;">
+            <div>
             <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#00ccff;margin-bottom:10px;">
                 Mouse Controls
             </div>
@@ -1679,6 +1683,7 @@ function _createGuideOverlay() {
                     <span style="font-size:12px;color:#bbb;">Teleport camera target to that location</span>
                 </div>
             </div>
+            </div></div>
         </div>
         <button id="guide-dismiss" style="
             background:transparent; border:1px solid #00ccff; color:#00ccff;
