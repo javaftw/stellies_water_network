@@ -1531,6 +1531,11 @@ function _createGuideOverlay() {
     // ── Minimap annotation ────────────────────────────────────────────────────
     const minimapAnn = makeAnnotation('2D overview — click or drag to navigate', 'left');
 
+    // ── Mouse controls annotation ─────────────────────────────────────────────
+    const controlsAnn = makeAnnotation(
+        'Navigate: left-drag pan · right-drag rotate · scroll zoom', 'left'
+    );
+
     // ── Position everything after the browser has laid out ────────────────────
     requestAnimationFrame(() => {
         // Panel annotations: right edge of annotation flush with left edge of panel stack, minus gap
@@ -1549,6 +1554,14 @@ function _createGuideOverlay() {
             const r = mm.getBoundingClientRect();
             minimapAnn.style.left = `${r.right + 10}px`;
             minimapAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
+        }
+
+        // Mouse controls annotation: to the right of the #info image, vertically centred on it
+        const info = document.getElementById('info');
+        if (info) {
+            const r = info.getBoundingClientRect();
+            controlsAnn.style.left = `${r.right + 10}px`;
+            controlsAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
         }
     });
 
