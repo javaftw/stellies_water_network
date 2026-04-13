@@ -277,30 +277,7 @@ function _buildDOM() {
     cta.addEventListener('mouseout',  () => { cta.style.background = 'transparent'; });
     cta.addEventListener('click', _dismiss);
 
-    // QGIS badge — shown in footer CTA area
-    const qgisBadge = document.createElement('div');
-    qgisBadge.style.cssText = `
-        display: flex; flex-direction: column; align-items: center; gap: 6px;
-        margin-top: 18px;
-    `;
-    const qgisImg = document.createElement('img');
-    qgisImg.src = 'qgis_logo.png';
-    qgisImg.alt = 'QGIS';
-    qgisImg.style.cssText = 'width: 32px; height: 32px; opacity: 0.55;';
-    const qgisLbl = document.createElement('span');
-    qgisLbl.textContent = 'Built with QGIS';
-    qgisLbl.style.cssText = `
-        font-size: 10px; color: #444;
-        letter-spacing: 0.08em; text-transform: uppercase;
-    `;
-    qgisBadge.appendChild(qgisImg);
-    qgisBadge.appendChild(qgisLbl);
-
-    const ctaInner = document.createElement('div');
-    ctaInner.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
-    ctaInner.appendChild(cta);
-    ctaInner.appendChild(qgisBadge);
-    ctaWrap.appendChild(ctaInner);
+    ctaWrap.appendChild(cta);
     footer.appendChild(barsEl);
     footer.appendChild(ctaWrap);
 
@@ -370,6 +347,23 @@ function _buildNarrative() {
 
     // QGIS placeholder 2
     frag.appendChild(_qgisPlaceholder('QGIS: network topology'));
+
+    // QGIS logo
+    const qgisBlock = document.createElement('div');
+    qgisBlock.style.cssText = `
+        display: flex; align-items: center; gap: 20px;
+        margin-bottom: 36px;
+    `;
+    const qgisImg = document.createElement('img');
+    qgisImg.src = 'qgis_logo.png';
+    qgisImg.alt = 'QGIS';
+    qgisImg.style.cssText = 'width: 120px; height: 120px; opacity: 0.85; flex-shrink: 0;';
+    const qgisCaption = document.createElement('span');
+    qgisCaption.textContent = 'All spatial data — DEM, satellite tiles, pipe network, infrastructure — was sourced, cleaned, and exported using QGIS.';
+    qgisCaption.style.cssText = 'font-size: 14px; font-style: italic; color: #666; line-height: 1.7;';
+    qgisBlock.appendChild(qgisImg);
+    qgisBlock.appendChild(qgisCaption);
+    frag.appendChild(qgisBlock);
 
     // Skills section
     frag.appendChild(_section('SKILLS',
