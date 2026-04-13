@@ -534,10 +534,112 @@ const { readout: timeReadout, row: timeRow } = makeSliderRow(
         const t = Number(input.value) / 100;
         updateSun(t);
         updateBuildingLights(t);
+        _updateHydroBars(t);
     }
 );
 timeReadout.textContent = sliderToTimeString(50);
 todBody.appendChild(timeRow);
+
+// ── Hydraulic indicators ──────────────────────────────────────────────────────
+// Pre-compute demand normalization range over 24 h (runs once at module load)
+let _D_MIN = Infinity, _D_MAX = -Infinity;
+for (let _i = 0; _i <= 2400; _i++) {
+    const _h = _i / 100;
+    const _d = 0.3
+        + 0.9 * Math.exp(-Math.pow((_h - 7)  / 2, 2))
+        + 0.6 * Math.exp(-Math.pow((_h - 18) / 3, 2));
+    if (_d < _D_MIN) _D_MIN = _d;
+    if (_d > _D_MAX) _D_MAX = _d;
+}
+const _D_RANGE = _D_MAX - _D_MIN;
+
+// Green → yellow → orange → red gradient
+function _hydroColor(v) {
+    const s = [
+        [0.00, [0,   204,  68]],
+        [0.33, [255, 221,   0]],
+        [0.67, [255, 136,   0]],
+        [1.00, [255,  34,  34]],
+    ];
+    for (let i = 0; i < s.length - 1; i++) {
+        if (v <= s[i + 1][0]) {
+            const f  = (v - s[i][0]) / (s[i + 1][0] - s[i][0]);
+            const [r0, g0, b0] = s[i][1];
+            const [r1, g1, b1] = s[i + 1][1];
+            return `rgb(${Math.round(r0+f*(r1-r0))},${Math.round(g0+f*(g1-g0))},${Math.round(b0+f*(b1-b0))})`;
+        }
+    }
+    return 'rgb(255,34,34)';
+}
+
+// Compute all five normalised [0,1] values for slider t (0–1 = 00:00–24:00)
+function _computeHydro(t) {
+    const h    = t * 24;
+    const dRaw = 0.3
+        + 0.9 * Math.exp(-Math.pow((h -  7) / 2, 2))
+        + 0.6 * Math.exp(-Math.pow((h - 18) / 3, 2));
+    const D = Math.max(0, Math.min(1, (dRaw - _D_MIN) / _D_RANGE));
+    const P = 1 - 0.7 * D;
+    const rRaw = 0.5 + 0.4 * Math.sin((h - 3) * Math.PI / 12);
+    const R = Math.max(0, Math.min(1, (rRaw - 0.1) / 0.8));
+    const F = Math.max(0, Math.min(1, Math.pow(D, 1.8)));
+    const L = Math.max(0, Math.min(1, Math.pow(P, 1.5)));
+    return { demand: D, pressure: P, reservoir: R, friction: F, leak: L };
+}
+
+// Build the five bar rows inside todBody
+const _hydroDefs = [
+    ['demand',    'Demand'],
+    ['pressure',  'Pressure'],
+    ['reservoir', 'Reservoir Lvl'],
+    ['friction',  'Friction Loss'],
+    ['leak',      'Leak Risk'],
+];
+const _hydroIndicators = {};
+
+const _hydroSep = document.createElement('div');
+_hydroSep.style.cssText = 'border-top:1px solid #1c1c1c; margin:10px 0 8px;';
+todBody.appendChild(_hydroSep);
+
+for (const [key, label] of _hydroDefs) {
+    const row = document.createElement('div');
+    row.style.cssText = 'display:flex; align-items:center; gap:8px; margin-bottom:5px;';
+
+    const lbl = document.createElement('span');
+    lbl.textContent = label;
+    lbl.style.cssText = 'width:100px; flex-shrink:0; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:#555;';
+
+    const track = document.createElement('div');
+    track.style.cssText = 'flex:1; height:5px; background:#181818; border-radius:3px; overflow:hidden;';
+
+    const fill = document.createElement('div');
+    fill.style.cssText = 'height:100%; width:0%; border-radius:3px; transition:width 0.12s ease, background-color 0.12s ease;';
+    track.appendChild(fill);
+
+    const valEl = document.createElement('span');
+    valEl.style.cssText = 'width:28px; text-align:right; font-size:10px; flex-shrink:0;';
+
+    row.appendChild(lbl);
+    row.appendChild(track);
+    row.appendChild(valEl);
+    todBody.appendChild(row);
+    _hydroIndicators[key] = { fill, valEl };
+}
+
+function _updateHydroBars(t) {
+    const vals = _computeHydro(t);
+    for (const [key, { fill, valEl }] of Object.entries(_hydroIndicators)) {
+        const v   = vals[key];
+        const col = _hydroColor(v);
+        fill.style.width           = `${(v * 100).toFixed(1)}%`;
+        fill.style.backgroundColor = col;
+        valEl.textContent          = `${Math.round(v * 100)}%`;
+        valEl.style.color          = col;
+    }
+}
+
+// Seed bars at initial slider position (t = 0.5 = 12:00)
+_updateHydroBars(0.5);
 
 // --- Panel 2: X-Ray View ---
 const xrayBody = makePanel('🔭  X-Ray View');
