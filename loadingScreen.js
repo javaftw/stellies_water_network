@@ -277,7 +277,30 @@ function _buildDOM() {
     cta.addEventListener('mouseout',  () => { cta.style.background = 'transparent'; });
     cta.addEventListener('click', _dismiss);
 
-    ctaWrap.appendChild(cta);
+    // QGIS badge — shown in footer CTA area
+    const qgisBadge = document.createElement('div');
+    qgisBadge.style.cssText = `
+        display: flex; flex-direction: column; align-items: center; gap: 6px;
+        margin-top: 18px;
+    `;
+    const qgisImg = document.createElement('img');
+    qgisImg.src = 'qgis_logo.png';
+    qgisImg.alt = 'QGIS';
+    qgisImg.style.cssText = 'width: 32px; height: 32px; opacity: 0.55;';
+    const qgisLbl = document.createElement('span');
+    qgisLbl.textContent = 'Built with QGIS';
+    qgisLbl.style.cssText = `
+        font-size: 10px; color: #444;
+        letter-spacing: 0.08em; text-transform: uppercase;
+    `;
+    qgisBadge.appendChild(qgisImg);
+    qgisBadge.appendChild(qgisLbl);
+
+    const ctaInner = document.createElement('div');
+    ctaInner.style.cssText = 'display:flex; flex-direction:column; align-items:center;';
+    ctaInner.appendChild(cta);
+    ctaInner.appendChild(qgisBadge);
+    ctaWrap.appendChild(ctaInner);
     footer.appendChild(barsEl);
     footer.appendChild(ctaWrap);
 
