@@ -1647,12 +1647,38 @@ function _createGuideOverlay() {
         <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;letter-spacing:0.03em;">
             Stellenbosch Water Infrastructure
         </div>
-        <div style="font-size:13px;color:#999;line-height:1.75;margin-bottom:26px;">
+        <div style="font-size:13px;color:#999;line-height:1.75;margin-bottom:18px;">
             A real-time 3D viewer of Stellenbosch's municipal water network,
             built from QGIS-processed GIS data.<br><br>
             Use the panels on the right to explore lighting, x-ray terrain,
             inspect features, and filter pipelines.
             The minimap in the bottom-left mirrors your view and supports click-to-navigate.
+        </div>
+        <div style="
+            background:#0a0a0a; border:1px solid #222; border-radius:6px;
+            padding:12px 16px; margin-bottom:22px; text-align:left;
+        ">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#00ccff;margin-bottom:10px;">
+                Mouse Controls
+            </div>
+            <div style="display:flex;flex-direction:column;gap:6px;">
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Left drag</span>
+                    <span style="font-size:12px;color:#bbb;">Pan the camera across the scene</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Right drag</span>
+                    <span style="font-size:12px;color:#bbb;">Rotate / orbit around the target</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Scroll wheel</span>
+                    <span style="font-size:12px;color:#bbb;">Zoom in and out</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:12px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Minimap click</span>
+                    <span style="font-size:12px;color:#bbb;">Teleport camera target to that location</span>
+                </div>
+            </div>
         </div>
         <button id="guide-dismiss" style="
             background:transparent; border:1px solid #00ccff; color:#00ccff;
@@ -1722,11 +1748,6 @@ function _createGuideOverlay() {
     // ── Minimap annotation ────────────────────────────────────────────────────
     const minimapAnn = makeAnnotation('2D overview — click or drag to navigate', 'left');
 
-    // ── Mouse controls annotation ─────────────────────────────────────────────
-    const controlsAnn = makeAnnotation(
-        'Navigate: left-drag pan · right-drag rotate · scroll zoom', 'left'
-    );
-
     // ── Position everything after the browser has laid out ────────────────────
     requestAnimationFrame(() => {
         // Panel annotations: right edge of annotation flush with left edge of panel stack, minus gap
@@ -1747,13 +1768,6 @@ function _createGuideOverlay() {
             minimapAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
         }
 
-        // Mouse controls annotation: to the right of the #info image, vertically centred on it
-        const info = document.getElementById('info');
-        if (info) {
-            const r = info.getBoundingClientRect();
-            controlsAnn.style.left = `${r.right + 10}px`;
-            controlsAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
-        }
     });
 
     document.body.appendChild(overlay);

@@ -8,22 +8,10 @@
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { overflow: hidden; font-family: Arial, sans-serif; }
         #canvas-container { width: 100vw; height: 100vh; display: block; }
-        #info {
-            position: fixed; top: 10px; left: 10px; z-index: 50;
-        }
-        #info img {
-            display: block;
-            height: 140px;
-            width: auto;
-            opacity: 0.85;
-        }
     </style>
 </head>
 <body>
-<div id="info">
-        <img src="mouse_controls.png" alt="Controls: Left click pan, Right click rotate, Scroll zoom">
-    </div>
-    <div id="canvas-container"></div>
+<div id="canvas-container"></div>
 <script src="https://cdn.jsdelivr.net/npm/geotiff@2.1.3/dist-browser/geotiff.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
