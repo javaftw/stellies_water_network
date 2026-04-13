@@ -546,8 +546,9 @@ let _D_MIN = Infinity, _D_MAX = -Infinity;
 for (let _i = 0; _i <= 2400; _i++) {
     const _h = _i / 100;
     const _d = 0.3
-        + 0.9 * Math.exp(-Math.pow((_h - 7)  / 2, 2))
-        + 0.6 * Math.exp(-Math.pow((_h - 18) / 3, 2));
+        + 0.9 * Math.exp(-Math.pow((_h -  7) / 2, 2))
+        + 0.6 * Math.exp(-Math.pow((_h - 18) / 3, 2))
+        + 0.4 * Math.exp(-Math.pow((_h - 12.5) / 5, 2));  // broad midday floor
     if (_d < _D_MIN) _D_MIN = _d;
     if (_d > _D_MAX) _D_MAX = _d;
 }
@@ -577,7 +578,8 @@ function _computeHydro(t) {
     const h    = t * 24;
     const dRaw = 0.3
         + 0.9 * Math.exp(-Math.pow((h -  7) / 2, 2))
-        + 0.6 * Math.exp(-Math.pow((h - 18) / 3, 2));
+        + 0.6 * Math.exp(-Math.pow((h - 18) / 3, 2))
+        + 0.4 * Math.exp(-Math.pow((h - 12.5) / 5, 2));  // broad midday floor
     const D = Math.max(0, Math.min(1, (dRaw - _D_MIN) / _D_RANGE));
     const P = 1 - 0.7 * D;
     const rRaw = 0.5 + 0.4 * Math.sin((h - 3) * Math.PI / 12);
