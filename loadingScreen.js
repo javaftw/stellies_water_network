@@ -341,11 +341,11 @@ function _buildNarrative() {
     wprsBlock.style.cssText = 'margin-bottom: 36px;';
     const wprsImg = document.createElement('img');
     wprsImg.src = 'WPRS.png';
-    wprsImg.alt = 'GLS Water Pipe Record Sheet for Stellenbosch Municipality';
+    wprsImg.alt = 'Water Distribution System — Pipe Replacement Study (GLS, June 2019)';
     wprsImg.style.cssText = 'width: 100%; border: 1px solid #1e1e1e; display: block;';
     const wprsCaption = document.createElement('p');
     wprsCaption.textContent =
-        'Water Pipe Record Sheet prepared by GLS for the Stellenbosch Municipality. ' +
+        'Water Distribution System — Pipe Replacement Study, prepared by GLS for the Stellenbosch Municipality (June 2019). ' +
         'No publicly available GIS data exists for the municipal pipe network, so this document ' +
         'was used as the primary source: pipe routes were georeferenced manually in QGIS against ' +
         'aerial imagery, then digitised, attributed, and exported as GeoJSON for use in this viewer.';
@@ -360,9 +360,9 @@ function _buildNarrative() {
     // Pipeline section
     frag.appendChild(_section('PIPELINE',
         'No publicly available GIS data exists for the Stellenbosch municipal pipe network. ' +
-        'The pipe routes visible in this viewer were derived by georeferencing GLS\'s own Water Pipe ' +
-        'Record Sheets against aerial imagery in QGIS, then digitised, attributed with diameter and ' +
-        'material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
+        'The pipe routes visible in this viewer were derived by georeferencing GLS\'s Water Distribution ' +
+        'System — Pipe Replacement Study (June 2019) against aerial imagery in QGIS, then digitised, ' +
+        'attributed with diameter and material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
         'parses the coordinates, aligns them to a DEM-derived terrain mesh, and renders animated pipe ' +
         'flow in real time. The elevation model and satellite tiles were also sourced and processed ' +
         'entirely in QGIS before being handed off to the web renderer.'
