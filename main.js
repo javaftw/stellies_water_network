@@ -1740,9 +1740,9 @@ function _createGuideOverlay() {
 
     // ── Panel annotations ─────────────────────────────────────────────────────
     const PANEL_HINTS = [
-        { body: todBody,     text: 'Adjust time of day & lighting'       },
+        { body: todBody,     text: 'Simulate any hour of the day'          },
         { body: xrayBody,    text: 'X-ray terrain to reveal pipes below'  },
-        { body: inspectBody, text: 'Click any feature to inspect it'      },
+        { body: inspectBody, text: 'Enable to click features and inspect their properties' },
         { body: filterBody,  text: 'Filter pipes by material or diameter' },
     ];
     const panelAnns = PANEL_HINTS.map(({ body, text }) => ({
