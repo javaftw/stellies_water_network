@@ -230,6 +230,48 @@ scene.add(ambientLight);
 const hemiLight = new THREE.HemisphereLight(0xffffff, 0x222222, 0.4);
 scene.add(hemiLight);
 
+// Sky dome — large inside-out sphere with a time-of-day gradient shader.
+// Follows the camera each frame so it always surrounds the view.
+// Lower hemisphere fades to black so x-ray looking through terrain stays clean.
+// scene.background remains 0x000000 (never changed).
+const _skyMat = new THREE.ShaderMaterial({
+    side: THREE.BackSide,
+    depthWrite: false,
+    uniforms: {
+        uZenith:  { value: new THREE.Color(0x1060cc) },
+        uHorizon: { value: new THREE.Color(0x88b8d8) },
+    },
+    vertexShader: `
+        varying vec3 vDir;
+        void main() {
+            vDir = normalize(position);
+            gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+        }
+    `,
+    fragmentShader: `
+        uniform vec3 uZenith;
+        uniform vec3 uHorizon;
+        varying vec3 vDir;
+        void main() {
+            float h = vDir.y;
+            vec3 col;
+            if (h >= 0.0) {
+                // Upper hemisphere: smooth zenith-to-horizon gradient
+                col = mix(uHorizon, uZenith, pow(h, 0.5));
+            } else {
+                // Lower hemisphere: quick fade to black — keeps x-ray view clean
+                float f = clamp(1.0 + h / 0.12, 0.0, 1.0);
+                col = uHorizon * f * 0.5;
+            }
+            gl_FragColor = vec4(col, 1.0);
+        }
+    `,
+});
+const _skyDome = new THREE.Mesh(new THREE.SphereGeometry(5500, 32, 16), _skyMat);
+_skyDome.renderOrder   = -1;
+_skyDome.frustumCulled = false;
+scene.add(_skyDome);
+
 const sunLight = new THREE.DirectionalLight(0xffffff, 1.5);
 sunLight.castShadow = true;
 sunLight.shadow.mapSize.width  = 8192;
@@ -249,6 +291,33 @@ scene.add(sunLight);
 scene.add(sunLight.target);
 
 const sunDirection = new THREE.Vector3();
+
+// Sky colour stops  [t, zenithColor, horizonColor]
+// t=0 → 6:00 (dawn), t=1 → 18:00 (dusk)
+const _SKY_STOPS = [
+    [0.00, new THREE.Color(0x080c1e), new THREE.Color(0xb04010)],  // dawn
+    [0.10, new THREE.Color(0x0d1a50), new THREE.Color(0xe05510)],  // early morning
+    [0.20, new THREE.Color(0x1840a0), new THREE.Color(0xf07840)],  // morning
+    [0.35, new THREE.Color(0x1a5cb8), new THREE.Color(0xa0c0e0)],  // late morning
+    [0.50, new THREE.Color(0x1060cc), new THREE.Color(0x88b8d8)],  // midday
+    [0.65, new THREE.Color(0x1a5cb8), new THREE.Color(0xd0a058)],  // afternoon
+    [0.80, new THREE.Color(0x1840a0), new THREE.Color(0xe06030)],  // later afternoon
+    [0.90, new THREE.Color(0x0d1a50), new THREE.Color(0xd04010)],  // late afternoon
+    [1.00, new THREE.Color(0x080c1e), new THREE.Color(0x903010)],  // dusk
+];
+
+function _getSkyColors(t) {
+    for (let i = 0; i < _SKY_STOPS.length - 1; i++) {
+        const [t0, z0, h0] = _SKY_STOPS[i];
+        const [t1, z1, h1] = _SKY_STOPS[i + 1];
+        if (t <= t1) {
+            const f = (t - t0) / (t1 - t0);
+            return { zenith: z0.clone().lerp(z1, f), horizon: h0.clone().lerp(h1, f) };
+        }
+    }
+    const last = _SKY_STOPS[_SKY_STOPS.length - 1];
+    return { zenith: last[1].clone(), horizon: last[2].clone() };
+}
 
 function updateSun(t) {
     const angle     = t * Math.PI;
@@ -292,9 +361,13 @@ function updateSun(t) {
     ambientLight.color.copy(ambientBlended);
     hemiLight.color.copy(ambientBlended);
 
-    // Sky stays black regardless of time of day
-    scene.background = new THREE.Color(0x000000);
-    scene.fog.color.set(0x000000);
+    // Update sky dome colours and tint fog to match horizon (darkened)
+    const { zenith, horizon } = _getSkyColors(t);
+    _skyMat.uniforms.uZenith.value.copy(zenith);
+    _skyMat.uniforms.uHorizon.value.copy(horizon);
+    scene.fog.color.copy(horizon).multiplyScalar(0.25);  // dark tint only — background stays black
+
+    scene.background = new THREE.Color(0x000000);  // always black — keeps x-ray view clean
 }
 
 updateSun(0.5);
@@ -1601,6 +1674,9 @@ function animate() {
 
     // Keep building lights in sync with current time slider value
     updateBuildingLights(_currentTimeT);
+
+    // Sky dome follows camera so it always surrounds the view
+    _skyDome.position.copy(camera.position);
 
     renderer.render(scene, camera);
 }
