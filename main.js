@@ -1121,8 +1121,8 @@ fetch('pipelines_exported.geojson')
 
             pipeNetwork.featureIndex.push({
                 fid:          props.fid      ?? null,
-                material:     props.material ?? null,
-                diam_mm:      props.diam_mm  ?? null,
+                material:     props.material    ?? null,
+                diam_mm:      props.diameter_mm ?? null,
                 vertexStart,
                 vertexCount,
                 geoJsonFeature: feature,
