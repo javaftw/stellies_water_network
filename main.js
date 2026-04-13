@@ -1639,54 +1639,52 @@ function _createGuideOverlay() {
     // ── Centre card ──────────────────────────────────────────────────────────
     const card = document.createElement('div');
     card.style.cssText = `
-        position: absolute; left: 50%; top: 50%;
-        transform: translate(-50%, -50%);
+        position: absolute; left: 20px; top: 20px;
         background: #111; border: 1px solid #333; border-radius: 8px;
-        padding: 36px 44px; max-width: 520px; text-align: center; color: #e0e0e0;
+        padding: 20px 24px; width: 340px; text-align: center; color: #e0e0e0;
         pointer-events: all;
     `;
     card.innerHTML = `
-        <div style="font-size:17px;font-weight:700;color:#fff;margin-bottom:12px;letter-spacing:0.03em;">
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:0.03em;">
             Stellenbosch Water Infrastructure
         </div>
-        <div style="font-size:13px;color:#999;line-height:1.75;margin-bottom:18px;">
-            A real-time 3D viewer of Stellenbosch's municipal water network,
-            built from QGIS-processed GIS data.<br><br>
-            Use the panels on the right to explore lighting, x-ray terrain,
-            inspect features, and filter pipelines.
-            The minimap in the bottom-left mirrors your view and supports click-to-navigate.
+        <div style="font-size:12px;color:#999;line-height:1.6;margin-bottom:12px;">
+            Real-time 3D viewer of Stellenbosch's municipal water network,
+            built from QGIS-processed GIS data.
+            Use the panels on the right to explore the scene;
+            the minimap bottom-left supports click-to-navigate.
         </div>
         <div style="
             background:#0a0a0a; border:1px solid #222; border-radius:6px;
-            padding:12px 16px; margin-bottom:22px; text-align:left;
+            padding:10px 12px; margin-bottom:14px; text-align:left;
         ">
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#00ccff;margin-bottom:12px;">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#00ccff;margin-bottom:8px;">
                 Mouse Controls
             </div>
             <img src="mouse_controls.png" alt="Mouse controls diagram"
-                 style="display:block;height:120px;width:auto;opacity:0.85;margin:0 auto 14px;">
-            <div style="display:flex;flex-direction:column;gap:7px;">
-                <div style="display:flex;align-items:baseline;gap:10px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Left drag</span>
-                    <span style="font-size:12px;color:#bbb;">Pan the camera across the scene</span>
+                 style="display:block;height:90px;width:auto;opacity:0.85;margin:0 auto 10px;">
+            <div style="display:flex;flex-direction:column;gap:5px;">
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                    <span style="font-size:10px;color:#555;width:80px;flex-shrink:0;text-align:right;">Left drag</span>
+                    <span style="font-size:11px;color:#bbb;">Pan across the scene</span>
                 </div>
-                <div style="display:flex;align-items:baseline;gap:10px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Right drag</span>
-                    <span style="font-size:12px;color:#bbb;">Rotate / orbit around the target</span>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                    <span style="font-size:10px;color:#555;width:80px;flex-shrink:0;text-align:right;">Right drag</span>
+                    <span style="font-size:11px;color:#bbb;">Rotate / orbit</span>
                 </div>
-                <div style="display:flex;align-items:baseline;gap:10px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Scroll wheel</span>
-                    <span style="font-size:12px;color:#bbb;">Zoom in and out</span>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                    <span style="font-size:10px;color:#555;width:80px;flex-shrink:0;text-align:right;">Scroll wheel</span>
+                    <span style="font-size:11px;color:#bbb;">Zoom in and out</span>
                 </div>
-                <div style="display:flex;align-items:baseline;gap:10px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Minimap click</span>
-                    <span style="font-size:12px;color:#bbb;">Teleport camera target to that location</span>
+                <div style="display:flex;align-items:baseline;gap:8px;">
+                    <span style="font-size:10px;color:#555;width:80px;flex-shrink:0;text-align:right;">Minimap click</span>
+                    <span style="font-size:11px;color:#bbb;">Teleport to location</span>
                 </div>
             </div>
         </div>
         <button id="guide-dismiss" style="
             background:transparent; border:1px solid #00ccff; color:#00ccff;
-            padding:8px 30px; border-radius:4px; font-size:13px;
+            padding:6px 24px; border-radius:4px; font-size:12px;
             cursor:pointer; letter-spacing:0.08em;
         ">Continue  →</button>
     `;
