@@ -292,8 +292,8 @@ scene.add(sunLight.target);
 
 const sunDirection = new THREE.Vector3();
 
-// Sky colour stops  [t, zenithColor, horizonColor]
-// t=0 → 6:00 (dawn), t=1 → 18:00 (dusk)
+// Sky colour stops  [dayFrac, zenithColor, horizonColor]
+// dayFrac = 0 → sunrise (05:30), 0.5 → solar noon (~12:30), 1 → sunset (19:30)
 const _SKY_STOPS = [
     [0.00, new THREE.Color(0x080c1e), new THREE.Color(0xb04010)],  // dawn
     [0.10, new THREE.Color(0x0d1a50), new THREE.Color(0xe05510)],  // early morning
@@ -320,54 +320,70 @@ function _getSkyColors(t) {
 }
 
 function updateSun(t) {
-    const angle     = t * Math.PI;
-    const elevation = Math.sin(angle);
+    // t = 0 → 00:00, t = 1 → 24:00
+    const T_RISE = 5.5  / 24;   // 05:30
+    const T_SET  = 19.5 / 24;   // 19:30
 
-    sunDirection.set(
-        -Math.cos(angle),
-         Math.sin(angle),
-        -0.2
-    ).normalize();
+    const isDay   = t > T_RISE && t < T_SET;
+    let dayFrac   = 0;    // 0 at sunrise, 0.5 at solar noon, 1 at sunset
+    let elevation = 0;    // sin of sun arc, 0 at horizon, 1 at zenith
 
-    // Three-stop colour model:
-    //   horizon  (elevation ~0)   : deep orange-red
-    //   low      (elevation ~0.15): warm golden
-    //   mid-noon (elevation >0.3) : cool bright white-yellow
-    // smoothstep gives a narrow warm band near the horizon only.
-    const horizonColor = new THREE.Color(0xff4400);  // deep orange-red
-    const goldenColor  = new THREE.Color(0xffcc66);  // warm gold
-    const noonColor    = new THREE.Color(0xfff8ee);  // bright cool white
+    if (isDay) {
+        dayFrac   = (t - T_RISE) / (T_SET - T_RISE);
+        elevation = Math.sin(dayFrac * Math.PI);
+    }
 
-    // t1: 0→1 as elevation crosses the horizon band (0 to 0.18)
-    const t1 = Math.min(1.0, elevation / 0.18);
-    const t1s = t1 * t1 * (3 - 2 * t1);          // smoothstep
+    // Smooth 0→1 as elevation rises from 0 to 0.08 (dawn/dusk transition band)
+    const raw    = Math.max(0.0, Math.min(1.0, elevation / 0.08));
+    const smooth = raw * raw * (3 - 2 * raw);   // smoothstep
 
-    // t2: 0→1 as elevation crosses into full daylight (0.18 to 0.40)
-    const t2 = Math.max(0.0, Math.min(1.0, (elevation - 0.18) / 0.22));
-    const t2s = t2 * t2 * (3 - 2 * t2);          // smoothstep
+    // ── Sun direction (east→west arc during day) ──────────────────────────────
+    if (isDay) {
+        sunDirection.set(
+            -Math.cos(dayFrac * Math.PI),
+             Math.sin(dayFrac * Math.PI),
+            -0.2
+        ).normalize();
+    }
 
-    const blended = horizonColor.clone().lerp(goldenColor, t1s).lerp(noonColor, t2s);
-    sunLight.color.copy(blended);
-    sunLight.intensity     = 0.3 + elevation * 1.8;
-    ambientLight.intensity = 0.05 + elevation * 0.2;
-    hemiLight.intensity    = 0.05 + elevation * 0.2;
+    // ── Sun light colour (horizon → gold → noon white) ────────────────────────
+    const horizonColor = new THREE.Color(0xff4400);
+    const goldenColor  = new THREE.Color(0xffcc66);
+    const noonColor    = new THREE.Color(0xfff8ee);
 
-    // Tint ambient/hemi to match the horizon colour during early/late periods
-    const ambientHorizon = new THREE.Color(0xcc4400);  // warm red-orange
-    const ambientGolden  = new THREE.Color(0xcc8833);  // amber
-    const ambientNoon    = new THREE.Color(0xaabbcc);  // bright sky-blue tinted white
+    const t1  = Math.min(1.0, elevation / 0.18);
+    const t1s = t1 * t1 * (3 - 2 * t1);
+    const t2  = Math.max(0.0, Math.min(1.0, (elevation - 0.18) / 0.22));
+    const t2s = t2 * t2 * (3 - 2 * t2);
 
-    const ambientBlended = ambientHorizon.clone().lerp(ambientGolden, t1s).lerp(ambientNoon, t2s);
-    ambientLight.color.copy(ambientBlended);
-    hemiLight.color.copy(ambientBlended);
+    sunLight.color.copy(horizonColor.clone().lerp(goldenColor, t1s).lerp(noonColor, t2s));
+    sunLight.intensity = smooth * (0.3 + elevation * 1.8);
 
-    // Update sky dome colours and tint fog to match horizon (darkened)
-    const { zenith, horizon } = _getSkyColors(t);
-    _skyMat.uniforms.uZenith.value.copy(zenith);
-    _skyMat.uniforms.uHorizon.value.copy(horizon);
-    scene.fog.color.copy(horizon).multiplyScalar(0.25);  // dark tint only — background stays black
+    // ── Ambient + hemi: blend between moonlight (night) and sky-tinted (day) ──
+    const moonAmbient = new THREE.Color(0x1a2840);   // faint blue moonlight
+    const moonHemi    = new THREE.Color(0x0d1a2e);
+    const moonGround  = new THREE.Color(0x060e18);
 
-    scene.background = new THREE.Color(0x000000);  // always black — keeps x-ray view clean
+    const ambHorizon  = new THREE.Color(0xcc4400);
+    const ambGolden   = new THREE.Color(0xcc8833);
+    const ambNoon     = new THREE.Color(0xaabbcc);
+    const dayAmbient  = ambHorizon.clone().lerp(ambGolden, t1s).lerp(ambNoon, t2s);
+
+    ambientLight.color.copy(moonAmbient.clone().lerp(dayAmbient, smooth));
+    ambientLight.intensity = 0.04 + smooth * 0.21;
+
+    hemiLight.color.copy(moonHemi.clone().lerp(dayAmbient, smooth));
+    hemiLight.groundColor.copy(moonGround.clone().lerp(new THREE.Color(0x222211), smooth));
+    hemiLight.intensity = 0.03 + smooth * 0.22;
+
+    // ── Sky dome: black at night, day colours fade in at dawn ─────────────────
+    const { zenith, horizon } = _getSkyColors(dayFrac);
+    const nightBlack = new THREE.Color(0x000000);
+    _skyMat.uniforms.uZenith.value.copy(nightBlack.clone().lerp(zenith,  smooth));
+    _skyMat.uniforms.uHorizon.value.copy(nightBlack.clone().lerp(horizon, smooth));
+
+    scene.fog.color.copy(horizon).multiplyScalar(smooth * 0.25);
+    scene.background = new THREE.Color(0x000000);   // always black — keeps x-ray view clean
 }
 
 updateSun(0.5);
@@ -504,8 +520,8 @@ function makeSliderRow(labelText, min, max, value, onInput) {
 const todBody = makePanel('☀  Time of Day');
 
 function sliderToTimeString(val) {
-    const totalMinutes = 6 * 60 + (Number(val) / 100) * 12 * 60;
-    const hours   = Math.floor(totalMinutes / 60);
+    const totalMinutes = (Number(val) / 100) * 24 * 60;
+    const hours   = Math.floor(totalMinutes / 60) % 24;
     const minutes = Math.floor(totalMinutes % 60);
     return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}`;
 }
@@ -1348,17 +1364,17 @@ let _currentTimeT = 0.5;
 // Building lights ramp gradually; street/highway lights use this too but
 // treated as a binary threshold (any value > 0 = all on).
 function _lightsFraction(t) {
-    // Morning ramp-down
-    if (t <= 0.028) return 1.0;
-    if (t <= 0.056) return 1.0 - 0.5  * ((t - 0.028) / 0.028);   // 1.0 → 0.5
-    if (t <= 0.083) return 0.5 - 0.4  * ((t - 0.056) / 0.027);   // 0.5 → 0.1
-    if (t <= 0.097) return 0.1 - 0.1  * ((t - 0.083) / 0.014);   // 0.1 → 0.0
-    // Daytime
-    if (t < 0.903)  return 0.0;
-    // Evening ramp-up
-    if (t <= 0.917) return 0.1  * ((t - 0.903) / 0.014);          // 0.0 → 0.1
-    if (t <= 0.944) return 0.1  + 0.4 * ((t - 0.917) / 0.027);   // 0.1 → 0.5
-    if (t <= 0.972) return 0.5  + 0.5 * ((t - 0.944) / 0.028);   // 0.5 → 1.0
+    // t = 0 → 00:00, t = 1 → 24:00.  Sunrise 05:30, sunset 19:30.
+    // Lights ramp off in the 1.5 h after sunrise, ramp on in the 1.5 h before sunset.
+    const DAWN_START = 5.5 / 24;    // 05:30 — begin fading out
+    const DAWN_END   = 7.0 / 24;    // 07:00 — fully off
+    const DUSK_START = 18.0 / 24;   // 18:00 — begin fading in
+    const DUSK_END   = 19.5 / 24;   // 19:30 — fully on
+
+    if (t <= DAWN_START) return 1.0;
+    if (t <  DAWN_END)   return 1.0 - (t - DAWN_START) / (DAWN_END - DAWN_START);
+    if (t <= DUSK_START) return 0.0;
+    if (t <  DUSK_END)   return       (t - DUSK_START) / (DUSK_END - DUSK_START);
     return 1.0;
 }
 
