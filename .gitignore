@@ -4,8 +4,9 @@ geometry_simplifier/
 # QGIS layer metadata (not needed by web app)
 *.qmd
 
-# Claude Code session data
+# Claude Code files
 .claude/
+CLAUDE.md
 
 # OS noise
 .DS_Store
