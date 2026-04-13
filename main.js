@@ -360,9 +360,9 @@ function updateSun(t) {
     sunLight.intensity = smooth * (0.3 + elevation * 1.8);
 
     // ── Ambient + hemi: blend between moonlight (night) and sky-tinted (day) ──
-    const moonAmbient = new THREE.Color(0x1a2840);   // faint blue moonlight
-    const moonHemi    = new THREE.Color(0x0d1a2e);
-    const moonGround  = new THREE.Color(0x060e18);
+    const moonAmbient = new THREE.Color(0x2e4d70);   // soft blue moonlight
+    const moonHemi    = new THREE.Color(0x1e3550);
+    const moonGround  = new THREE.Color(0x0e1e30);
 
     const ambHorizon  = new THREE.Color(0xcc4400);
     const ambGolden   = new THREE.Color(0xcc8833);
@@ -370,11 +370,11 @@ function updateSun(t) {
     const dayAmbient  = ambHorizon.clone().lerp(ambGolden, t1s).lerp(ambNoon, t2s);
 
     ambientLight.color.copy(moonAmbient.clone().lerp(dayAmbient, smooth));
-    ambientLight.intensity = 0.04 + smooth * 0.21;
+    ambientLight.intensity = 0.12 + smooth * 0.13;
 
     hemiLight.color.copy(moonHemi.clone().lerp(dayAmbient, smooth));
     hemiLight.groundColor.copy(moonGround.clone().lerp(new THREE.Color(0x222211), smooth));
-    hemiLight.intensity = 0.03 + smooth * 0.22;
+    hemiLight.intensity = 0.10 + smooth * 0.15;
 
     // ── Sky dome: black at night, day colours fade in at dawn ─────────────────
     const { zenith, horizon } = _getSkyColors(dayFrac);
