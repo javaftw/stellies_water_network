@@ -626,7 +626,7 @@ inspectBody.previousElementSibling.addEventListener('click', () => {
 const _filterActive = { materials: new Set(), diameters: new Set() };
 let _filterCheckboxes = [];   // { type, value, input } for bulk-uncheck on collapse
 
-const filterBody = makePanel('⚗  Filter Pipelines', false);
+const filterBody = makePanel('⚗  Filter Pipelines', true);
 filterBody.style.maxHeight    = '300px';
 filterBody.style.overflowY    = 'auto';
 filterBody.style.paddingBottom = '8px';
