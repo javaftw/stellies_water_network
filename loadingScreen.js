@@ -336,13 +336,36 @@ function _buildNarrative() {
     // QGIS placeholder 1
     frag.appendChild(_qgisPlaceholder('QGIS: source data overview'));
 
+    // WPRS document image + caption
+    const wprsBlock = document.createElement('div');
+    wprsBlock.style.cssText = 'margin-bottom: 36px;';
+    const wprsImg = document.createElement('img');
+    wprsImg.src = 'WPRS.png';
+    wprsImg.alt = 'GLS Water Pipe Record Sheet for Stellenbosch Municipality';
+    wprsImg.style.cssText = 'width: 100%; border: 1px solid #1e1e1e; display: block;';
+    const wprsCaption = document.createElement('p');
+    wprsCaption.textContent =
+        'Water Pipe Record Sheet prepared by GLS for the Stellenbosch Municipality. ' +
+        'No publicly available GIS data exists for the municipal pipe network, so this document ' +
+        'was used as the primary source: pipe routes were georeferenced manually in QGIS against ' +
+        'aerial imagery, then digitised, attributed, and exported as GeoJSON for use in this viewer.';
+    wprsCaption.style.cssText = `
+        font-size: 13px; font-style: italic; color: #555;
+        line-height: 1.7; margin: 10px 0 0;
+    `;
+    wprsBlock.appendChild(wprsImg);
+    wprsBlock.appendChild(wprsCaption);
+    frag.appendChild(wprsBlock);
+
     // Pipeline section
     frag.appendChild(_section('PIPELINE',
-        'Raw municipal network data was imported into QGIS, cleaned, reprojected to UTM\u00a034S, ' +
-        'and exported as GeoJSON. A custom Three.js renderer parses the coordinates, aligns them ' +
-        'to a DEM-derived terrain mesh, and renders animated pipe flow in real time. ' +
-        'The elevation model and satellite tiles loading in the progress bars below were both ' +
-        'sourced and processed entirely in QGIS before being handed off to the web renderer.'
+        'No publicly available GIS data exists for the Stellenbosch municipal pipe network. ' +
+        'The pipe routes visible in this viewer were derived by georeferencing GLS\'s own Water Pipe ' +
+        'Record Sheets against aerial imagery in QGIS, then digitised, attributed with diameter and ' +
+        'material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
+        'parses the coordinates, aligns them to a DEM-derived terrain mesh, and renders animated pipe ' +
+        'flow in real time. The elevation model and satellite tiles were also sourced and processed ' +
+        'entirely in QGIS before being handed off to the web renderer.'
     ));
 
     // QGIS placeholder 2
