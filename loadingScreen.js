@@ -386,6 +386,7 @@ function _buildNarrative() {
     const contactBody = document.createElement('div');
     contactBody.style.cssText = 'display:flex; flex-direction:column; gap:6px;';
     contactBody.innerHTML = `
+        <span style="font-size:18px; color:#ccc; font-weight:300;">Hennie Kotze</span>
         <span style="font-size:16px; color:#999;">
             <a href="mailto:javaftw@gmail.com"
                style="color:#00ccff; text-decoration:none;">javaftw@gmail.com</a>
