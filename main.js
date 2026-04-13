@@ -1467,7 +1467,7 @@ function _createGuideOverlay() {
             background:transparent; border:1px solid #00ccff; color:#00ccff;
             padding:8px 30px; border-radius:4px; font-size:13px;
             cursor:pointer; letter-spacing:0.08em;
-        ">Explore  →</button>
+        ">Continue  →</button>
     `;
     overlay.appendChild(card);
 
