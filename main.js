@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { initTerrain, getTerrainMesh, sampleTerrainElevation } from './terrain.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { initMinimap, updateMinimap, addMinimapLayers, highlightMinimapFeature, clearMinimapHighlight } from './minimap.js';
+import { initMinimap, updateMinimap, addMinimapLayers, highlightMinimapFeature, clearMinimapHighlight, highlightFilterFeatures, clearFilterHighlight } from './minimap.js';
 import { ORIGIN_X, ORIGIN_Y } from './constants.js';
 import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
@@ -622,6 +622,115 @@ inspectBody.previousElementSibling.addEventListener('click', () => {
     }
 });
 
+// --- Panel 4: Filter Pipelines ---
+const _filterActive = { materials: new Set(), diameters: new Set() };
+let _filterCheckboxes = [];   // { type, value, input } for bulk-uncheck on collapse
+
+const filterBody = makePanel('⚗  Filter Pipelines', false);
+filterBody.style.maxHeight    = '300px';
+filterBody.style.overflowY    = 'auto';
+filterBody.style.paddingBottom = '8px';
+
+// Placeholder until pipes finish loading
+const _filterPlaceholder = document.createElement('div');
+_filterPlaceholder.textContent = 'Loading pipeline data…';
+_filterPlaceholder.style.cssText = 'color:#555; font-size:12px; font-style:italic;';
+filterBody.appendChild(_filterPlaceholder);
+
+function _filterSectionHeader(label) {
+    const h = document.createElement('div');
+    h.textContent = label;
+    h.style.cssText = 'font-size:11px; text-transform:uppercase; letter-spacing:0.1em; color:#555; margin: 10px 0 4px;';
+    return h;
+}
+
+function _filterCheckboxRow(label, type, value) {
+    const row = document.createElement('label');
+    row.style.cssText = 'display:flex; align-items:center; gap:7px; cursor:pointer; padding:2px 0;';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.style.cssText = 'cursor:pointer; accent-color:#ff2222; flex-shrink:0;';
+    const txt = document.createElement('span');
+    txt.textContent = label;
+    txt.style.cssText = 'font-size:12px; color:#bbb;';
+    row.appendChild(cb);
+    row.appendChild(txt);
+    cb.addEventListener('change', () => {
+        if (cb.checked) _filterActive[type].add(value);
+        else            _filterActive[type].delete(value);
+        _applyFilter();
+    });
+    _filterCheckboxes.push({ type, value, input: cb });
+    return row;
+}
+
+function _buildFilterUI() {
+    _filterPlaceholder.remove();
+    const feats = pipeNetwork.featureIndex;
+
+    const materials = [...new Set(feats.map(f => f.material).filter(v => v != null))].sort();
+    const diameters = [...new Set(feats.map(f => f.diam_mm).filter(v => v != null))].sort((a, b) => a - b);
+
+    filterBody.appendChild(_filterSectionHeader('Material'));
+    for (const m of materials) filterBody.appendChild(_filterCheckboxRow(m, 'materials', m));
+
+    filterBody.appendChild(_filterSectionHeader('Diameter (mm)'));
+    for (const d of diameters) filterBody.appendChild(_filterCheckboxRow(`${d} mm`, 'diameters', d));
+}
+
+function _clearFilter() {
+    _filterActive.materials.clear();
+    _filterActive.diameters.clear();
+    for (const { input } of _filterCheckboxes) input.checked = false;
+    _filterHighlightMesh.visible = false;
+    clearFilterHighlight();
+}
+
+function _applyFilter() {
+    const hasMat = _filterActive.materials.size > 0;
+    const hasDia = _filterActive.diameters.size > 0;
+
+    if (!hasMat && !hasDia) {
+        _filterHighlightMesh.visible = false;
+        clearFilterHighlight();
+        return;
+    }
+
+    const matched = pipeNetwork.featureIndex.filter(f => {
+        const matOk = !hasMat || _filterActive.materials.has(f.material);
+        const diaOk = !hasDia || _filterActive.diameters.has(f.diam_mm);
+        return matOk && diaOk;
+    });
+
+    if (matched.length === 0) {
+        _filterHighlightMesh.visible = false;
+        clearFilterHighlight();
+        return;
+    }
+
+    const srcPos  = pipeNetwork.geometry.getAttribute('position');
+    const total   = matched.reduce((s, f) => s + f.vertexCount, 0);
+    const arr     = new Float32Array(total * 3);
+    let cursor = 0;
+    for (const f of matched) {
+        for (let i = 0; i < f.vertexCount; i++) {
+            arr[cursor * 3 + 0] = srcPos.getX(f.vertexStart + i);
+            arr[cursor * 3 + 1] = srcPos.getY(f.vertexStart + i);
+            arr[cursor * 3 + 2] = srcPos.getZ(f.vertexStart + i);
+            cursor++;
+        }
+    }
+    _filterHighlightGeo.setAttribute('position', new THREE.Float32BufferAttribute(arr, 3));
+    _filterHighlightMesh.visible = true;
+
+    highlightFilterFeatures(matched.map(f => f.geoJsonFeature));
+}
+
+// Collapsing the filter panel clears all selections
+filterBody.previousElementSibling.addEventListener('click', () => {
+    if (filterBody.style.display === 'none') _clearFilter();
+});
+
 // Clock for animations
 const clock = new THREE.Clock();
 
@@ -874,6 +983,17 @@ _highlightMesh.frustumCulled = false;
 _highlightMesh.visible       = false;
 scene.add(_highlightMesh);
 
+// Filter highlight — multiple features, same red, rendered on top
+const _filterHighlightGeo  = new THREE.BufferGeometry();
+const _filterHighlightMesh = new THREE.LineSegments(
+    _filterHighlightGeo,
+    new THREE.LineBasicMaterial({ color: 0xff2222, depthTest: false })
+);
+_filterHighlightMesh.renderOrder   = 1;
+_filterHighlightMesh.frustumCulled = false;
+_filterHighlightMesh.visible       = false;
+scene.add(_filterHighlightMesh);
+
 function _clearInspect() {
     // Restore pipe highlight
     _highlightMesh.visible = false;
@@ -1028,6 +1148,7 @@ fetch('pipelines_exported.geojson')
         pipeNetwork.geometry = geometry;
 
         scene.add(mesh);
+        _buildFilterUI();
 
         console.log(`Pipes loaded — ${pipeNetwork.featureIndex.length} features`);
         console.log('Sample feature:', pipeNetwork.featureIndex[0]);

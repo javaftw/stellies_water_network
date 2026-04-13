@@ -79,6 +79,9 @@ let _openHeight = MAP_H + 28;
 // Highlight layer — replaced each time a feature is selected, removed on clear
 let _highlightLayer = null;
 
+// Filter highlight layer — all pipe features matching the active filter
+let _filterHighlightLayer = null;
+
 // ─── Public API ───────────────────────────────────────────────────────────────
 export function initMinimap() {
     _buildDOM();
@@ -139,6 +142,32 @@ export function clearMinimapHighlight() {
     if (!_map || !_highlightLayer) return;
     _map.removeLayer(_highlightLayer);
     _highlightLayer = null;
+}
+
+// Highlight all pipeline features matching the active filter (array of GeoJSON features).
+export function highlightFilterFeatures(geoJsonFeatures) {
+    if (!_map) return;
+    if (_filterHighlightLayer) { _map.removeLayer(_filterHighlightLayer); _filterHighlightLayer = null; }
+    if (!geoJsonFeatures || geoJsonFeatures.length === 0) return;
+
+    const toLatLng = (coords) => {
+        const [lat, lon] = utmToLatLon(coords[0], coords[1]);
+        return L.latLng(lat, lon);
+    };
+
+    const fc = { type: 'FeatureCollection', features: geoJsonFeatures };
+    _filterHighlightLayer = L.geoJSON(fc, {
+        coordsToLatLng: toLatLng,
+        style:          { color: '#ff2222', weight: 3, opacity: 0.9 },
+        interactive:    false,
+    }).addTo(_map);
+}
+
+// Remove the filter highlight layer.
+export function clearFilterHighlight() {
+    if (!_map || !_filterHighlightLayer) return;
+    _map.removeLayer(_filterHighlightLayer);
+    _filterHighlightLayer = null;
 }
 
 // Called from main.js once pipelines, reservoirs, and pump-stations GeoJSON are loaded.
