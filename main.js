@@ -607,7 +607,7 @@ for (const [key, label] of _hydroDefs) {
 
     const lbl = document.createElement('span');
     lbl.textContent = label;
-    lbl.style.cssText = 'width:100px; flex-shrink:0; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:#555;';
+    lbl.style.cssText = 'width:100px; flex-shrink:0; font-size:10px; text-transform:uppercase; letter-spacing:0.07em; color:#00ccff;';
 
     const track = document.createElement('div');
     track.style.cssText = 'flex:1; height:5px; background:#181818; border-radius:3px; overflow:hidden;';
@@ -617,7 +617,7 @@ for (const [key, label] of _hydroDefs) {
     track.appendChild(fill);
 
     const valEl = document.createElement('span');
-    valEl.style.cssText = 'width:28px; text-align:right; font-size:10px; flex-shrink:0;';
+    valEl.style.cssText = 'width:44px; text-align:right; font-size:10px; flex-shrink:0;';
 
     row.appendChild(lbl);
     row.appendChild(track);
@@ -633,8 +633,8 @@ function _updateHydroBars(t) {
         const col = _hydroColor(v);
         fill.style.width           = `${(v * 100).toFixed(1)}%`;
         fill.style.backgroundColor = col;
-        valEl.textContent          = `${Math.round(v * 100)}%`;
-        valEl.style.color          = col;
+        valEl.textContent = v < 0.25 ? 'low' : v < 0.50 ? 'medium' : v < 0.75 ? 'high' : 'peak';
+        valEl.style.color = col;
     }
 }
 
