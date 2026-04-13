@@ -1642,7 +1642,7 @@ function _createGuideOverlay() {
         position: absolute; left: 50%; top: 50%;
         transform: translate(-50%, -50%);
         background: #111; border: 1px solid #333; border-radius: 8px;
-        padding: 36px 44px; max-width: 400px; text-align: center; color: #e0e0e0;
+        padding: 36px 44px; max-width: 520px; text-align: center; color: #e0e0e0;
         pointer-events: all;
     `;
     card.innerHTML = `
@@ -1660,32 +1660,29 @@ function _createGuideOverlay() {
             background:#0a0a0a; border:1px solid #222; border-radius:6px;
             padding:12px 16px; margin-bottom:22px; text-align:left;
         ">
-            <div style="display:flex;align-items:flex-start;gap:14px;">
-            <img src="mouse_controls.png" alt="Mouse controls diagram"
-                 style="height:110px;width:auto;opacity:0.85;flex-shrink:0;">
-            <div>
-            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#00ccff;margin-bottom:10px;">
+            <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#00ccff;margin-bottom:12px;">
                 Mouse Controls
             </div>
-            <div style="display:flex;flex-direction:column;gap:6px;">
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Left drag</span>
+            <img src="mouse_controls.png" alt="Mouse controls diagram"
+                 style="display:block;height:120px;width:auto;opacity:0.85;margin:0 auto 14px;">
+            <div style="display:flex;flex-direction:column;gap:7px;">
+                <div style="display:flex;align-items:baseline;gap:10px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Left drag</span>
                     <span style="font-size:12px;color:#bbb;">Pan the camera across the scene</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Right drag</span>
+                <div style="display:flex;align-items:baseline;gap:10px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Right drag</span>
                     <span style="font-size:12px;color:#bbb;">Rotate / orbit around the target</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Scroll wheel</span>
+                <div style="display:flex;align-items:baseline;gap:10px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Scroll wheel</span>
                     <span style="font-size:12px;color:#bbb;">Zoom in and out</span>
                 </div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;">Minimap click</span>
+                <div style="display:flex;align-items:baseline;gap:10px;">
+                    <span style="font-size:11px;color:#555;width:90px;flex-shrink:0;text-align:right;">Minimap click</span>
                     <span style="font-size:12px;color:#bbb;">Teleport camera target to that location</span>
                 </div>
             </div>
-            </div></div>
         </div>
         <button id="guide-dismiss" style="
             background:transparent; border:1px solid #00ccff; color:#00ccff;
