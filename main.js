@@ -1909,6 +1909,138 @@ function animate() {
     _skyDome.position.copy(camera.position);
 
     renderer.render(scene, camera);
+    _updateCompass();
 }
 
 animate();
+
+// ─── 3D Compass ──────────────────────────────────────────────────────────────
+let _compassRenderer = null;
+let _compassScene    = null;
+let _compassCamera   = null;
+
+function _initCompass() {
+    const SIZE = 120;
+
+    // Canvas element — fixed top-left
+    const canvas = document.createElement('canvas');
+    canvas.width  = SIZE * window.devicePixelRatio;
+    canvas.height = SIZE * window.devicePixelRatio;
+    canvas.style.cssText = [
+        'position:fixed',
+        'top:16px',
+        'left:16px',
+        'width:' + SIZE + 'px',
+        'height:' + SIZE + 'px',
+        'border-radius:50%',
+        'pointer-events:none',
+        'z-index:100',
+    ].join(';');
+    document.body.appendChild(canvas);
+
+    // Dedicated renderer
+    _compassRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    _compassRenderer.setPixelRatio(window.devicePixelRatio);
+    _compassRenderer.setSize(SIZE, SIZE);
+    _compassRenderer.setClearColor(0x000000, 0);
+
+    // Compass scene
+    _compassScene = new THREE.Scene();
+
+    // Ambient + directional light so disk face is visible
+    _compassScene.add(new THREE.AmbientLight(0xffffff, 1.2));
+    const dLight = new THREE.DirectionalLight(0xffffff, 1.0);
+    dLight.position.set(1, 2, 1);
+    _compassScene.add(dLight);
+
+    // Disk (horizontal ground plane, XZ)
+    const diskGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.06, 64);
+    const diskMat = new THREE.MeshStandardMaterial({
+        color: 0x1a1a2e,
+        roughness: 0.6,
+        metalness: 0.3,
+        transparent: true,
+        opacity: 0.85,
+    });
+    _compassScene.add(new THREE.Mesh(diskGeo, diskMat));
+
+    // Thin ring outline
+    const ringGeo = new THREE.TorusGeometry(1.0, 0.04, 8, 64);
+    const ringMat = new THREE.MeshStandardMaterial({ color: 0x00ccff, roughness: 0.4, metalness: 0.5 });
+    _compassScene.add(new THREE.Mesh(ringGeo, ringMat));
+
+    // North arrow — scene -Z = UTM North, so arrow points toward -Z (dz = -1)
+    // Red arrowhead
+    const northGroup = new THREE.Group();
+    // Shaft pointing north (-Z)
+    const nShaftGeo = new THREE.BoxGeometry(0.08, 0.05, 0.55);
+    const nShaftMat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+    const nShaft = new THREE.Mesh(nShaftGeo, nShaftMat);
+    nShaft.position.set(0, 0.06, -0.55 / 2);
+    northGroup.add(nShaft);
+    // Cone head at -Z end
+    const nHeadGeo = new THREE.ConeGeometry(0.11, 0.30, 8);
+    const nHeadMat = new THREE.MeshStandardMaterial({ color: 0xff3333 });
+    const nHead = new THREE.Mesh(nHeadGeo, nHeadMat);
+    nHead.rotation.x = Math.PI / 2;   // tip now points -Z
+    nHead.position.set(0, 0.06, -0.82);
+    northGroup.add(nHead);
+    _compassScene.add(northGroup);
+
+    // South stub — grey, half the length
+    const sShaftGeo = new THREE.BoxGeometry(0.08, 0.05, 0.45);
+    const sShaftMat = new THREE.MeshStandardMaterial({ color: 0x888888 });
+    const sShaft = new THREE.Mesh(sShaftGeo, sShaftMat);
+    sShaft.position.set(0, 0.06, 0.45 / 2);
+    _compassScene.add(sShaft);
+
+    // E/W tick marks — short stubs at ±X, rotated to run along X axis
+    [-1, 1].forEach((side) => {
+        const tGeo = new THREE.BoxGeometry(0.30, 0.05, 0.06);
+        const tMat = new THREE.MeshStandardMaterial({ color: 0x555577 });
+        const t = new THREE.Mesh(tGeo, tMat);
+        t.position.set(side * 0.75, 0.06, 0);
+        _compassScene.add(t);
+    });
+
+    // "N" label via CanvasTexture sprite
+    const labelCanvas = document.createElement('canvas');
+    labelCanvas.width  = 64;
+    labelCanvas.height = 64;
+    const lCtx = labelCanvas.getContext('2d');
+    lCtx.clearRect(0, 0, 64, 64);
+    lCtx.font         = 'bold 46px Arial';
+    lCtx.fillStyle    = '#ff5555';
+    lCtx.textAlign    = 'center';
+    lCtx.textBaseline = 'middle';
+    lCtx.fillText('N', 32, 34);
+    const labelTex = new THREE.CanvasTexture(labelCanvas);
+    const labelMat = new THREE.SpriteMaterial({ map: labelTex, transparent: true, depthTest: false });
+    const label     = new THREE.Sprite(labelMat);
+    label.scale.set(0.55, 0.55, 1);
+    label.position.set(0, 0.25, -1.0);
+    _compassScene.add(label);
+
+    // Compass camera — orthographic-style perspective, looking from above at an angle
+    _compassCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
+}
+
+function _updateCompass() {
+    if (!_compassRenderer || !_compassScene || !_compassCamera) return;
+
+    const { theta, phi } = cameraState;
+
+    // Position compass camera same orientation as main camera, at fixed radius
+    const D = 4.5;
+    _compassCamera.position.set(
+        Math.sin(theta) * Math.sin(phi) * D,
+        Math.cos(phi) * D,
+        Math.cos(theta) * Math.sin(phi) * D
+    );
+    _compassCamera.lookAt(0, 0, 0);
+    _compassCamera.up.set(0, 1, 0);
+
+    _compassRenderer.render(_compassScene, _compassCamera);
+}
+
+_initCompass();
