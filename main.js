@@ -531,10 +531,7 @@ const { readout: timeReadout, row: timeRow } = makeSliderRow(
     0, 100, 50,
     (input, readout) => {
         readout.textContent = sliderToTimeString(input.value);
-        const t = Number(input.value) / 100;
-        updateSun(t);
-        updateBuildingLights(t);
-        _updateHydroBars(t);
+        _targetTimeT = Number(input.value) / 100;  // animate loop eases toward this
     }
 );
 timeReadout.textContent = sliderToTimeString(50);
@@ -1460,7 +1457,10 @@ fetch('pump_stations.geojson')
     })
     .catch(err => { console.error('Pump station GeoJSON load error:', err); taskSubDone('infrastructure'); });
 
-// --- Shared time state (read by animate loop) ---
+// --- Shared time state ---
+// _targetTimeT  = raw value set by the slider (jumps instantly)
+// _currentTimeT = smoothly eased value used for rendering (lerps toward target)
+let _targetTimeT  = 0.5;
 let _currentTimeT = 0.5;
 
 // --- Building lights ---
@@ -1508,7 +1508,6 @@ let _highwayLights = null;
 let _highwayCount  = 0;
 
 function updateBuildingLights(t) {
-    _currentTimeT = t;
     const fraction = _lightsFraction(t);
 
     // Building lights — gradual draw range
@@ -1862,6 +1861,15 @@ function animate() {
         u.xrayEnabled.value   = coneState.xrayEnabled ? 1.0 : 0.0;
     }
 
+    // Ease time-of-day toward target — only update scene while still moving
+    const _todDiff = _targetTimeT - _currentTimeT;
+    if (Math.abs(_todDiff) > 0.00005) {
+        _currentTimeT += _todDiff * 0.1;
+        updateSun(_currentTimeT);
+        updateBuildingLights(_currentTimeT);
+        _updateHydroBars(_currentTimeT);
+    }
+
     // Animate pipes — speed scales with demand (0.15× at min, 1.0× at peak)
     if (pipeNetwork.mesh) {
         const demand = _computeHydro(_currentTimeT).demand;
@@ -1869,9 +1877,6 @@ function animate() {
         _pipeTime += delta * speedScale;
         pipeNetwork.mesh.material.uniforms.time.value = _pipeTime;
     }
-
-    // Keep building lights in sync with current time slider value
-    updateBuildingLights(_currentTimeT);
 
     // Sky dome follows camera so it always surrounds the view
     _skyDome.position.copy(camera.position);
