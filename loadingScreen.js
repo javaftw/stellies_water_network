@@ -324,12 +324,12 @@ function _buildNarrative() {
     // ── STELLENBOSCH WATER PIPE NETWORK ───────────────────────────────────────
     frag.appendChild(_sectionMulti('STELLENBOSCH WATER PIPE NETWORK', [
         'No publicly available GIS data exists for the Stellenbosch municipal pipe network. ' +
-        'The pipe routes visible in this viewer were derived by georeferencing GLS\'s Water Distribution ' +
-        'System — Pipe Replacement Study (June 2019) in QGIS, then digitised, attributed with diameter ' +
+        'The pipe routes visible in this viewer were derived by georeferencing <em>GLS\'s Water Distribution ' +
+        'System - Pipe Replacement Study</em> (June 2019) in <strong>QGIS</strong>, then digitised, attributed with diameter ' +
         'and material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
         'parses the coordinates, aligns them to a DEM-derived terrain mesh, and renders animated pipe ' +
         'flow in real time. The elevation model and satellite tiles were also sourced and processed ' +
-        'entirely in QGIS before being handed off to the web renderer.',
+        'entirely in <strong>QGIS</strong> before being handed off to the web renderer.',
     ]));
 
     // ── QGIS screenshot ───────────────────────────────────────────────────────
@@ -340,7 +340,7 @@ function _buildNarrative() {
     qgisScreenImg.alt = 'QGIS — Stellenbosch water pipe network';
     qgisScreenImg.style.cssText = 'width: 100%; border: 1px solid #1e1e1e; display: block;';
     const qgisScreenCaption = document.createElement('p');
-    qgisScreenCaption.textContent = 'QGIS — digitised pipe network overlaid on aerial imagery, Stellenbosch.';
+    qgisScreenCaption.innerHTML = '<strong>QGIS</strong> — digitised pipe network overlaid on aerial imagery, Stellenbosch.';
     qgisScreenCaption.style.cssText = `
         font-size: 14px; font-style: italic; color: #777;
         line-height: 1.7; margin: 10px 0 0;
@@ -357,7 +357,7 @@ function _buildNarrative() {
     qgisImg.alt = 'QGIS';
     qgisImg.style.cssText = 'width: 120px; height: 120px; opacity: 0.85; flex-shrink: 0;';
     const qgisCaption = document.createElement('span');
-    qgisCaption.textContent = 'All spatial data — DEM, satellite tiles, pipe network, infrastructure — was sourced, cleaned, and exported using QGIS.';
+    qgisCaption.innerHTML = 'All spatial data — DEM, satellite tiles, pipe network, infrastructure — was sourced, cleaned, and exported using <strong>QGIS</strong>.';
     qgisCaption.style.cssText = 'font-size: 15px; font-style: italic; color: #777; line-height: 1.7;';
     qgisBlock.appendChild(qgisImg);
     qgisBlock.appendChild(qgisCaption);
@@ -365,9 +365,9 @@ function _buildNarrative() {
 
     // ── SKILLS AND EXPERIENCE ─────────────────────────────────────────────────
     frag.appendChild(_sectionMulti('SKILLS AND EXPERIENCE', [
-        'Spatial data wrangling (QGIS, Python, PostGIS), web-based 3D visualisation (Three.js, WebGL GLSL). ' +
+        'Spatial data wrangling (<strong>QGIS</strong>, Python, PostGIS), web-based 3D visualisation (Three.js, WebGL GLSL). ' +
         'I am a seasoned developer with a wide variety of development experiences, and I take initiative.',
-        'I have been using QGIS for personal projects for many years and was a contributor to the open-source ' +
+        'I have been using <strong>QGIS</strong> for personal projects for many years and was a contributor to the open-source ' +
         'GEEST and GEEST2 projects (Kartoza\u00a0/\u00a0World Bank), but I would like to turn my hobby into a source of income.',
         'Previously in my career I have also developed simulation software, among others, for the SAAF ' +
         '(Rooivalk Attack Helicopter), Sightlines\u00a0/\u00a0Phambili (waste management services) for a project at SASOL, ' +
@@ -389,7 +389,7 @@ function _buildNarrative() {
     qualBody.innerHTML =
         'I obtained a certificate from the Centre for Geographical Analysis (University of Stellenbosch) ' +
         'in 2018 after completing the <em>Introduction to GIS</em> short course. The course was designed ' +
-        'for ArcGIS but I performed all of the activities using QGIS (together with GDAL and SCP).';
+        'for ArcGIS but I performed all of the activities using <strong>QGIS</strong> (together with GDAL and SCP).';
     qualWrap.appendChild(qualLabel);
     qualWrap.appendChild(qualBody);
     frag.appendChild(qualWrap);
@@ -468,8 +468,8 @@ function _sectionMulti(labelText, paragraphs) {
     wrap.appendChild(label);
     for (const text of paragraphs) {
         const p = document.createElement('p');
-        p.textContent = text;
         p.style.cssText = 'font-size: 17px; color: #b0b0b0; line-height: 1.8; margin: 0 0 12px;';
+        p.innerHTML = text;
         wrap.appendChild(p);
     }
     return wrap;
