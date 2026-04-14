@@ -1683,9 +1683,11 @@ function _createGuideOverlay() {
             </div>
         </div>
         <button id="guide-dismiss" style="
+            display:none; opacity:0;
             background:transparent; border:1px solid #00ccff; color:#00ccff;
             padding:12px 36px; border-radius:4px; font-size:15px;
             cursor:pointer; letter-spacing:0.12em;
+            transition:opacity 0.5s ease;
             animation:guide-btn-pulse 2.2s ease-in-out infinite;
         ">Continue  →</button>
     `;
@@ -1784,12 +1786,12 @@ function _createGuideOverlay() {
         minimapAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
     }
 
-    // ── Intro sequence fired by Continue ─────────────────────────────────────
-    btn.addEventListener('click', () => {
-        card.style.display   = 'none';
-        overlay.style.background = 'transparent';
+    // ── Continue button: dismisses overlay after sequence completes ──────────
+    btn.addEventListener('click', () => overlay.remove());
 
-        const STEP = 300; // ms between each panel reveal
+    // ── Intro sequence: fires automatically when loading screen is dismissed ─
+    function _runIntroSequence() {
+        const STEP = 300; // ms between each panel expand
 
         const panelSteps = [
             { body: todBody,     annItem: panelAnns[0] },
@@ -1806,23 +1808,24 @@ function _createGuideOverlay() {
             }, i * STEP);
         });
 
-        // Minimap: expand then wait for CSS transition before positioning
+        // Minimap: expand, then reposition annotation after CSS height transition
         setTimeout(() => {
             expandMinimap();
             setTimeout(() => {
                 positionMinimapAnn();
                 minimapAnn.style.opacity = '1';
-            }, 320); // wait for minimap height transition (0.3s)
+            }, 320);
         }, panelSteps.length * STEP);
 
-        // Fade out and remove overlay after all annotations are visible
-        const totalMs = panelSteps.length * STEP + 320 + 600;
+        // Show Continue button once all panels and annotations are visible
+        const doneMs = panelSteps.length * STEP + 320 + 200;
         setTimeout(() => {
-            overlay.style.transition = 'opacity 0.5s ease';
-            overlay.style.opacity    = '0';
-            setTimeout(() => overlay.remove(), 500);
-        }, totalMs);
-    });
+            btn.style.display = 'inline-block';
+            requestAnimationFrame(() => { btn.style.opacity = '1'; });
+        }, doneMs);
+    }
+
+    window.addEventListener('loading-complete', _runIntroSequence, { once: true });
 
     document.body.appendChild(overlay);
 }
