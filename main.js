@@ -1645,8 +1645,8 @@ function _createGuideOverlay() {
         pointer-events: all;
     `;
     card.innerHTML = `
-        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:0.03em;">
-            Stellenbosch Water Infrastructure
+        <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px;letter-spacing:0.04em;line-height:1.35;">
+            Stellenbosch Water Infrastructure<br><span style="font-size:13px;letter-spacing:0.18em;color:#00ccff;font-weight:600;">TECHNOLOGY DEMONSTRATOR</span>
         </div>
         <div style="font-size:12px;color:#999;line-height:1.6;margin-bottom:12px;">
             Real-time 3D viewer of Stellenbosch's municipal water network,
@@ -1684,11 +1684,22 @@ function _createGuideOverlay() {
         </div>
         <button id="guide-dismiss" style="
             background:transparent; border:1px solid #00ccff; color:#00ccff;
-            padding:6px 24px; border-radius:4px; font-size:12px;
-            cursor:pointer; letter-spacing:0.08em;
+            padding:12px 36px; border-radius:4px; font-size:15px;
+            cursor:pointer; letter-spacing:0.12em;
+            animation:guide-btn-pulse 2.2s ease-in-out infinite;
         ">Continue  →</button>
     `;
     overlay.appendChild(card);
+
+    // Button pulse keyframe
+    const btnStyle = document.createElement('style');
+    btnStyle.textContent = `
+        @keyframes guide-btn-pulse {
+            0%, 100% { box-shadow: 0 0 8px rgba(0,204,255,0.3), 0 0 20px rgba(0,204,255,0.1); }
+            50%       { box-shadow: 0 0 22px rgba(0,204,255,0.8), 0 0 48px rgba(0,204,255,0.3); }
+        }
+    `;
+    document.head.appendChild(btnStyle);
 
     // Button hover glow
     const btn = card.querySelector('#guide-dismiss');
