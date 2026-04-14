@@ -183,7 +183,7 @@ function _buildDOM() {
     const moreIndicator = document.createElement('div');
     moreIndicator.id = 'ls-more';
     moreIndicator.style.cssText = `
-        position: fixed; bottom: 208px; left: 0; right: 0;
+        position: fixed; bottom: 208px; right: 24px;
         display: flex; flex-direction: column; align-items: center;
         pointer-events: none; transition: opacity 0.3s ease;
         opacity: 1;
