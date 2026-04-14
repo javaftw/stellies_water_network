@@ -1860,8 +1860,10 @@ function _createGuideOverlay() {
 let _pipeTime     = 0;
 let _lastFrameTime = 0;
 
-// Compass canvas — declared here so animate() can reference it before _initCompass() runs
-let _compassCanvas = null;
+// Compass — declared before animate() to avoid temporal dead zone
+let _compassRenderer = null;
+let _compassScene    = null;
+let _compassCamera   = null;
 
 // Animation loop
 function animate() {
@@ -1917,128 +1919,129 @@ function animate() {
 
 animate();
 
-// ─── 3D Compass (2D canvas with perspective foreshortening) ──────────────────
+// ─── 3D Compass ──────────────────────────────────────────────────────────────
 function _initCompass() {
-    const SIZE = 120;
-    const dpr  = window.devicePixelRatio || 1;
+    const SIZE = 130;
 
+    // Create canvas and append to body
     const canvas = document.createElement('canvas');
-    canvas.width  = SIZE * dpr;
-    canvas.height = SIZE * dpr;
-    canvas.style.cssText = `position:fixed;top:16px;left:16px;width:${SIZE}px;height:${SIZE}px;` +
-                           `border-radius:50%;pointer-events:none;z-index:950;`;
+    canvas.style.cssText =
+        `position:fixed;top:16px;left:16px;width:${SIZE}px;height:${SIZE}px;` +
+        `border-radius:50%;pointer-events:none;z-index:500;`;
     document.body.appendChild(canvas);
-    _compassCanvas = canvas;
+
+    // Dedicated WebGL renderer — alpha so background is transparent
+    _compassRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    _compassRenderer.setPixelRatio(window.devicePixelRatio);
+    _compassRenderer.setSize(SIZE, SIZE);
+    _compassRenderer.setClearColor(0x000000, 0);
+
+    _compassScene = new THREE.Scene();
+
+    // Lights
+    _compassScene.add(new THREE.AmbientLight(0xffffff, 1.5));
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(2, 4, 2);
+    _compassScene.add(sun);
+
+    // ── Disc face (horizontal, XZ plane) ─────────────────────────────────────
+    const diskGeo = new THREE.CylinderGeometry(1.0, 1.0, 0.07, 64);
+    const diskMat = new THREE.MeshStandardMaterial({
+        color:     0x1a3a6a,
+        emissive:  0x0a1a30,   // self-illumination so it's never pitch black
+        roughness: 0.5,
+        metalness: 0.4,
+    });
+    _compassScene.add(new THREE.Mesh(diskGeo, diskMat));
+
+    // ── Outer ring ────────────────────────────────────────────────────────────
+    const ringGeo = new THREE.TorusGeometry(1.02, 0.055, 8, 80);
+    const ringMat = new THREE.MeshStandardMaterial({
+        color:    0x00ccff,
+        emissive: 0x004466,
+        roughness: 0.3,
+        metalness: 0.6,
+    });
+    _compassScene.add(new THREE.Mesh(ringGeo, ringMat));
+
+    // ── North arrow — points toward scene -Z (UTM North) ─────────────────────
+    // Shaft
+    const nShaftGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.72, 12);
+    const nMat = new THREE.MeshStandardMaterial({
+        color:    0xff2222,
+        emissive: 0x661111,
+    });
+    const nShaft = new THREE.Mesh(nShaftGeo, nMat);
+    nShaft.rotation.x = Math.PI / 2;      // lay shaft along Z axis
+    nShaft.position.set(0, 0.07, -0.36);  // centred, elevated above disk face
+    _compassScene.add(nShaft);
+
+    // Cone tip
+    const nConeGeo = new THREE.ConeGeometry(0.14, 0.32, 12);
+    const nCone = new THREE.Mesh(nConeGeo, nMat);
+    nCone.rotation.x = Math.PI / 2;       // tip points -Z
+    nCone.position.set(0, 0.07, -0.88);
+    _compassScene.add(nCone);
+
+    // ── South stub — white, shorter ───────────────────────────────────────────
+    const sShaftGeo = new THREE.CylinderGeometry(0.055, 0.055, 0.50, 12);
+    const sMat = new THREE.MeshStandardMaterial({
+        color:    0xddddee,
+        emissive: 0x222233,
+    });
+    const sShaft = new THREE.Mesh(sShaftGeo, sMat);
+    sShaft.rotation.x = Math.PI / 2;
+    sShaft.position.set(0, 0.07, 0.25);
+    _compassScene.add(sShaft);
+
+    // ── "N" label via CanvasTexture sprite ────────────────────────────────────
+    const lc  = document.createElement('canvas');
+    lc.width  = 64; lc.height = 64;
+    const lx  = lc.getContext('2d');
+    lx.font         = 'bold 52px Arial';
+    lx.fillStyle    = '#ff6666';
+    lx.textAlign    = 'center';
+    lx.textBaseline = 'middle';
+    lx.fillText('N', 32, 35);
+    const labelMat = new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture(lc),
+        transparent: true,
+        depthTest: false,
+    });
+    const label = new THREE.Sprite(labelMat);
+    label.scale.set(0.52, 0.52, 1);
+    label.position.set(0, 0.28, -1.08);
+    _compassScene.add(label);
+
+    // ── Cardinal tick marks at E/W ────────────────────────────────────────────
+    [-1, 1].forEach(side => {
+        const tGeo = new THREE.CylinderGeometry(0.035, 0.035, 0.28, 8);
+        const tMat = new THREE.MeshStandardMaterial({ color: 0x446688, emissive: 0x112233 });
+        const t = new THREE.Mesh(tGeo, tMat);
+        t.rotation.z = Math.PI / 2;          // lay along X axis
+        t.position.set(side * 0.86, 0.07, 0);
+        _compassScene.add(t);
+    });
+
+    _compassCamera = new THREE.PerspectiveCamera(45, 1, 0.1, 20);
 }
 
 function _updateCompass() {
-    if (!_compassCanvas) return;
-
-    const dpr  = window.devicePixelRatio || 1;
-    const W    = _compassCanvas.width;    // physical pixels
-    const cx   = W / 2;
-    const cy   = W / 2;
-    const R    = cx * 0.84;              // disc radius in physical pixels
-
-    const ctx = _compassCanvas.getContext('2d');
-    ctx.clearRect(0, 0, W, W);
+    if (!_compassRenderer || !_compassScene || !_compassCamera) return;
 
     const { theta, phi } = cameraState;
 
-    // Perspective foreshortening of the horizontal disc:
-    // phi=0 (top-down) → full circle (tilt=1)
-    // phi=PI/2 (horizon) → edge-on (tilt→0), clamped to 0.15 so needle stays readable
-    const tilt = Math.max(0.15, Math.cos(phi));
+    // Mirror the main camera orientation — same theta/phi, fixed radius D
+    const D = 4.2;
+    _compassCamera.position.set(
+        Math.sin(theta) * Math.sin(phi) * D,
+        Math.cos(phi) * D,
+        Math.cos(theta) * Math.sin(phi) * D
+    );
+    _compassCamera.lookAt(0, 0, 0);
+    _compassCamera.up.set(0, 1, 0);
 
-    // ── Background disc (ellipse to suggest tilt) ──────────────────────────────
-    ctx.save();
-    ctx.beginPath();
-    ctx.ellipse(cx, cy, R, R * tilt, 0, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(6, 8, 22, 0.82)';
-    ctx.fill();
-    ctx.strokeStyle = '#00ccff';
-    ctx.lineWidth = 1.5 * dpr;
-    ctx.stroke();
-    ctx.restore();
-
-    // ── Cardinal tick marks ────────────────────────────────────────────────────
-    // At angles 0°(N), 90°(E), 180°(S), 270°(W) in world space:
-    // World angle a relative to camera azimuth theta:
-    //   screen direction of world azimuth a:
-    //     raw_x =  sin(a - theta)  (not foreshortened — E/W axis)
-    //     raw_y = -cos(a - theta)  (foreshortened by tilt — N/S = depth axis)
-    const tickLen = R * 0.14;
-    [0, Math.PI / 2, Math.PI, Math.PI * 3 / 2].forEach((a, i) => {
-        const rx =  Math.sin(a - theta);
-        const ry = -Math.cos(a - theta) * tilt;
-        const len = Math.sqrt(rx * rx + ry * ry) || 0.001;
-        const nx = rx / len;
-        const ny = ry / len;
-        ctx.save();
-        ctx.strokeStyle = i === 0 ? '#ff4444' : '#334466';
-        ctx.lineWidth = (i === 0 ? 2.5 : 1.5) * dpr;
-        ctx.beginPath();
-        ctx.moveTo(cx + nx * (R - tickLen), cy + ny * (R - tickLen) * 1);
-        ctx.lineTo(cx + nx * R,             cy + ny * R);
-        ctx.stroke();
-        ctx.restore();
-    });
-
-    // ── North/South needle ─────────────────────────────────────────────────────
-    // N direction in scene: -Z.  In compass screen space:
-    //   nx_screen = -sin(theta)
-    //   ny_screen = -cos(theta) * tilt
-    const anx  = -Math.sin(theta);
-    const any  = -Math.cos(theta) * tilt;
-    const aNrm = Math.sqrt(anx * anx + any * any) || 0.001;
-    const nxN  = anx / aNrm;
-    const nyN  = any / aNrm;
-
-    const headR = R * 0.70;
-    const tailR = R * 0.45;
-    const halfW = R * 0.14;
-
-    const perpX = -nyN * halfW;
-    const perpY =  nxN * halfW;
-
-    // Red north half (tip → centre)
-    ctx.save();
-    ctx.fillStyle = '#ee2222';
-    ctx.beginPath();
-    ctx.moveTo(cx + nxN * headR, cy + nyN * headR);
-    ctx.lineTo(cx + perpX,       cy + perpY);
-    ctx.lineTo(cx - perpX,       cy - perpY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    // Grey south half (tail → centre)
-    ctx.save();
-    ctx.fillStyle = '#44445a';
-    ctx.beginPath();
-    ctx.moveTo(cx - nxN * tailR, cy - nyN * tailR);
-    ctx.lineTo(cx + perpX,       cy + perpY);
-    ctx.lineTo(cx - perpX,       cy - perpY);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-
-    // Centre pivot dot
-    ctx.save();
-    ctx.beginPath();
-    ctx.arc(cx, cy, 3 * dpr, 0, Math.PI * 2);
-    ctx.fillStyle = '#aaaacc';
-    ctx.fill();
-    ctx.restore();
-
-    // "N" label just inside the arrowhead tip
-    ctx.save();
-    ctx.font = `bold ${10 * dpr}px Arial`;
-    ctx.fillStyle = '#ff7777';
-    ctx.textAlign = 'center';
-    ctx.textBaseline = 'middle';
-    ctx.fillText('N', cx + nxN * (headR - 13 * dpr), cy + nyN * (headR - 13 * dpr));
-    ctx.restore();
+    _compassRenderer.render(_compassScene, _compassCamera);
 }
 
 _initCompass();
