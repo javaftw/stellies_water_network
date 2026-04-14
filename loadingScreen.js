@@ -314,7 +314,7 @@ function _buildNarrative() {
         'Water Distribution System — Pipe Replacement Study, prepared by GLS for the ' +
         'Stellenbosch Municipality (June 2019).';
     wprsCaption.style.cssText = `
-        font-size: 13px; font-style: italic; color: #555;
+        font-size: 14px; font-style: italic; color: #777;
         line-height: 1.7; margin: 10px 0 0;
     `;
     wprsBlock.appendChild(wprsImg);
@@ -342,7 +342,7 @@ function _buildNarrative() {
     const qgisScreenCaption = document.createElement('p');
     qgisScreenCaption.textContent = 'QGIS — digitised pipe network overlaid on aerial imagery, Stellenbosch.';
     qgisScreenCaption.style.cssText = `
-        font-size: 13px; font-style: italic; color: #555;
+        font-size: 14px; font-style: italic; color: #777;
         line-height: 1.7; margin: 10px 0 0;
     `;
     qgisScreenBlock.appendChild(qgisScreenImg);
@@ -358,7 +358,7 @@ function _buildNarrative() {
     qgisImg.style.cssText = 'width: 120px; height: 120px; opacity: 0.85; flex-shrink: 0;';
     const qgisCaption = document.createElement('span');
     qgisCaption.textContent = 'All spatial data — DEM, satellite tiles, pipe network, infrastructure — was sourced, cleaned, and exported using QGIS.';
-    qgisCaption.style.cssText = 'font-size: 14px; font-style: italic; color: #666; line-height: 1.7;';
+    qgisCaption.style.cssText = 'font-size: 15px; font-style: italic; color: #777; line-height: 1.7;';
     qgisBlock.appendChild(qgisImg);
     qgisBlock.appendChild(qgisCaption);
     frag.appendChild(qgisBlock);
@@ -380,12 +380,12 @@ function _buildNarrative() {
     const qualLabel = document.createElement('div');
     qualLabel.textContent = 'RELEVANT QUALIFICATIONS';
     qualLabel.style.cssText = `
-        font-size: 13px; font-weight: 600;
+        font-size: 14px; font-weight: 600;
         letter-spacing: 0.14em; text-transform: uppercase;
         color: #888; margin-bottom: 10px;
     `;
     const qualBody = document.createElement('p');
-    qualBody.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.8; margin: 0;';
+    qualBody.style.cssText = 'font-size: 17px; color: #b0b0b0; line-height: 1.8; margin: 0;';
     qualBody.innerHTML =
         'I obtained a certificate from the Centre for Geographical Analysis (University of Stellenbosch) ' +
         'in 2018 after completing the <em>Introduction to GIS</em> short course. The course was designed ' +
@@ -400,7 +400,7 @@ function _buildNarrative() {
     const availLabel = document.createElement('div');
     availLabel.textContent = 'AVAILABILITY';
     availLabel.style.cssText = `
-        font-size: 13px; font-weight: 600;
+        font-size: 14px; font-weight: 600;
         letter-spacing: 0.14em; text-transform: uppercase;
         color: #888; margin-bottom: 10px;
     `;
@@ -414,7 +414,7 @@ function _buildNarrative() {
     for (const text of availItems) {
         const li = document.createElement('li');
         li.textContent = text;
-        li.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.7;';
+        li.style.cssText = 'font-size: 17px; color: #b0b0b0; line-height: 1.7;';
         availList.appendChild(li);
     }
     availWrap.appendChild(availLabel);
@@ -427,19 +427,19 @@ function _buildNarrative() {
     const contactLabel = document.createElement('div');
     contactLabel.textContent = 'CONTACT';
     contactLabel.style.cssText = `
-        font-size: 13px; font-weight: 600;
+        font-size: 14px; font-weight: 600;
         letter-spacing: 0.14em; text-transform: uppercase;
         color: #888; margin-bottom: 10px;
     `;
     const contactBody = document.createElement('div');
     contactBody.style.cssText = 'display:flex; flex-direction:column; gap:6px;';
     contactBody.innerHTML = `
-        <span style="font-size:18px; color:#ccc; font-weight:300;">Hennie Kotze</span>
-        <span style="font-size:16px; color:#999;">
+        <span style="font-size:20px; color:#ccc; font-weight:300;">Hennie Kotze</span>
+        <span style="font-size:17px; color:#b0b0b0;">
             <a href="mailto:javaftw@gmail.com"
                style="color:#00ccff; text-decoration:none;">javaftw@gmail.com</a>
         </span>
-        <span style="font-size:16px; color:#999;">079 352 4417</span>
+        <span style="font-size:17px; color:#b0b0b0;">079 352 4417</span>
     `;
     contact.appendChild(contactLabel);
     contact.appendChild(contactBody);
@@ -448,7 +448,7 @@ function _buildNarrative() {
     // ── Claude Code credit ────────────────────────────────────────────────────
     const claudeNote = document.createElement('p');
     claudeNote.textContent = 'This viewer was developed with the assistance of Claude Code by Anthropic.';
-    claudeNote.style.cssText = 'font-size: 12px; color: #333; line-height: 1.6; margin-bottom: 48px; font-style: italic;';
+    claudeNote.style.cssText = 'font-size: 13px; color: #444; line-height: 1.6; margin-bottom: 48px; font-style: italic;';
     frag.appendChild(claudeNote);
 
     return frag;
@@ -461,7 +461,7 @@ function _sectionMulti(labelText, paragraphs) {
     const label = document.createElement('div');
     label.textContent = labelText;
     label.style.cssText = `
-        font-size: 13px; font-weight: 600;
+        font-size: 14px; font-weight: 600;
         letter-spacing: 0.14em; text-transform: uppercase;
         color: #888; margin-bottom: 10px;
     `;
@@ -469,7 +469,7 @@ function _sectionMulti(labelText, paragraphs) {
     for (const text of paragraphs) {
         const p = document.createElement('p');
         p.textContent = text;
-        p.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.8; margin: 0 0 12px;';
+        p.style.cssText = 'font-size: 17px; color: #b0b0b0; line-height: 1.8; margin: 0 0 12px;';
         wrap.appendChild(p);
     }
     return wrap;
