@@ -388,6 +388,9 @@ function _buildNarrative() {
         'parses the coordinates, aligns them to a DEM-derived terrain mesh, and renders animated pipe ' +
         'flow in real time. The elevation model and satellite tiles were also sourced and processed ' +
         'entirely in <strong>QGIS</strong> before being handed off to the web renderer.',
+        '<em>Please note: the diameters and materials attributed to the pipes in this visualisation ' +
+        'have been chosen for demonstration purposes only and do not reflect actual values — ' +
+        'this information was not available in the source document.</em>',
     ]));
 
     // ── QGIS screenshot ───────────────────────────────────────────────────────
