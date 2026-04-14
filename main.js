@@ -818,6 +818,12 @@ const _filterActive = { materials: new Set(), diameters: new Set() };
 let _filterCheckboxes = [];   // { type, value, input } for bulk-uncheck on collapse
 let _filterCountEl    = null; // DOM element showing "n / x segments selected"
 let _filterTotal      = 0;    // pre-tallied at _buildFilterUI time
+let _filterTotalLen   = 0;    // pre-tallied total length in metres
+
+function _filterCountHTML(n, lengthM) {
+    const lenStr = lengthM != null ? ` (${lengthM.toFixed(2)} m)` : '';
+    return `<span style="color:#00ccff">${n}</span> / ${_filterTotal} pipe segments selected${lenStr}`;
+}
 
 const filterBody = makePanel('⚗  Filter Pipelines', false);
 filterBody.style.maxHeight    = '300px';
@@ -860,7 +866,8 @@ function _filterCheckboxRow(label, type, value) {
 function _buildFilterUI() {
     _filterPlaceholder.remove();
     const feats = pipeNetwork.featureIndex;
-    _filterTotal = feats.length;
+    _filterTotal    = feats.length;
+    _filterTotalLen = feats.reduce((s, f) => s + (f.length_m ?? 0), 0);
 
     // Count display
     _filterCountEl = document.createElement('div');
@@ -868,7 +875,7 @@ function _buildFilterUI() {
         font-size: 12px; color: #555; margin-bottom: 4px;
         font-variant-numeric: tabular-nums;
     `;
-    _filterCountEl.innerHTML = `<span style="color:#00ccff">0</span> / ${_filterTotal} pipe segments selected`;
+    _filterCountEl.innerHTML = _filterCountHTML(0, null);
     filterBody.appendChild(_filterCountEl);
 
     const materials = [...new Set(feats.map(f => f.material).filter(v => v != null))].sort();
@@ -887,7 +894,7 @@ function _clearFilter() {
     for (const { input } of _filterCheckboxes) input.checked = false;
     _filterHighlightMesh.visible = false;
     clearFilterHighlight();
-    if (_filterCountEl) _filterCountEl.innerHTML = `<span style="color:#00ccff">0</span> / ${_filterTotal} pipe segments selected`;
+    if (_filterCountEl) _filterCountEl.innerHTML = _filterCountHTML(0, null);
 }
 
 function _applyFilter() {
@@ -897,7 +904,7 @@ function _applyFilter() {
     if (!hasMat && !hasDia) {
         _filterHighlightMesh.visible = false;
         clearFilterHighlight();
-        if (_filterCountEl) _filterCountEl.innerHTML = `<span style="color:#00ccff">0</span> / ${_filterTotal} pipe segments selected`;
+        if (_filterCountEl) _filterCountEl.innerHTML = _filterCountHTML(0, null);
         return;
     }
 
@@ -910,7 +917,7 @@ function _applyFilter() {
     if (matched.length === 0) {
         _filterHighlightMesh.visible = false;
         clearFilterHighlight();
-        if (_filterCountEl) _filterCountEl.innerHTML = `<span style="color:#00ccff">0</span> / ${_filterTotal} pipe segments selected`;
+        if (_filterCountEl) _filterCountEl.innerHTML = _filterCountHTML(0, null);
         return;
     }
 
@@ -930,7 +937,8 @@ function _applyFilter() {
     _filterHighlightMesh.visible = true;
 
     highlightFilterFeatures(matched.map(f => f.geoJsonFeature));
-    if (_filterCountEl) _filterCountEl.innerHTML = `<span style="color:#00ccff">${matched.length}</span> / ${_filterTotal} pipe segments selected`;
+    const matchedLen = matched.reduce((s, f) => s + (f.length_m ?? 0), 0);
+    if (_filterCountEl) _filterCountEl.innerHTML = _filterCountHTML(matched.length, matchedLen);
 }
 
 // Collapsing the filter panel clears all selections
@@ -1253,9 +1261,10 @@ function _showFeatureInfo(type, data) {
     const rows =
         type === 'pipeline'
         ? [
-            ['FID',      data.fid      != null ? String(data.fid)      : '—'],
-            ['Material', data.material != null ? String(data.material) : '—'],
-            ['Diameter', data.diam_mm  != null ? `${data.diam_mm} mm`  : '—'],
+            ['FID',      data.fid       != null ? String(data.fid)                    : '—'],
+            ['Material', data.material  != null ? String(data.material)               : '—'],
+            ['Diameter', data.diam_mm   != null ? `${data.diam_mm} mm`                : '—'],
+            ['Length',   data.length_m  != null ? `${Number(data.length_m).toFixed(2)} m` : '—'],
           ]
         : type === 'reservoir'
         ? [
@@ -1327,9 +1336,10 @@ fetch('pipelines_exported.geojson')
             const vertexCount = vertexCursor - vertexStart;
 
             pipeNetwork.featureIndex.push({
-                fid:          props.fid      ?? null,
+                fid:          props.fid         ?? null,
                 material:     props.material    ?? null,
                 diam_mm:      props.diameter_mm ?? null,
+                length_m:     props.length_m    ?? null,
                 vertexStart,
                 vertexCount,
                 geoJsonFeature: feature,
