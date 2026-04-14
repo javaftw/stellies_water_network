@@ -355,9 +355,9 @@ function _buildNarrative() {
     frag.appendChild(_sectionMulti(null, [
         'My name is Hennie Kotze. I am a Stellenbosch-based senior software developer and an avid ' +
         'QGIS enthusiast looking for work or employment in any capacity where my skills could be of use to you.',
-        'Using GLS\'s own municipal domain as the subject and inspiration, I developed this interactive ' +
-        'viewer as a proactive initiative to demonstrate my understanding of how spatial data and software ' +
-        'development intersect in practice.',
+        'Using GLS\'s own municipal domain as the subject and inspiration, I envisaged and developed this ' +
+        'interactive viewer from scratch (no boilerplate or prefab components) as a proactive initiative ' +
+        'to demonstrate my understanding of how spatial data and software development intersect in practice.',
     ]));
 
     // ── WPRS document image ───────────────────────────────────────────────────
