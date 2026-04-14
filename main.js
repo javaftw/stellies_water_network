@@ -286,7 +286,8 @@ sunLight.shadow.camera.right  =  6000;
 sunLight.shadow.camera.top    =  6000;
 sunLight.shadow.camera.bottom = -6000;
 sunLight.shadow.camera.updateProjectionMatrix();
-sunLight.shadow.bias = -0.001;
+sunLight.shadow.bias       = -0.0001;  // reduced 10× — was causing ~14m peter-panning offset
+sunLight.shadow.normalBias =  0.2;     // normal-space offset prevents shadow acne at lower bias
 scene.add(sunLight);
 scene.add(sunLight.target);
 
