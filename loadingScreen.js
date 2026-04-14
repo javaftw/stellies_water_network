@@ -293,50 +293,16 @@ function _buildDOM() {
 function _buildNarrative() {
     const frag = document.createDocumentFragment();
 
-    // Salutation
-    const salutation = document.createElement('p');
-    salutation.textContent = 'Dear Dr Sinske,';
-    salutation.style.cssText = `
-        font-size: 22px; font-weight: 300;
-        color: #ccc; margin: 0 0 36px;
-        letter-spacing: 0.02em;
-    `;
-    frag.appendChild(salutation);
+    // ── INTRODUCTION ──────────────────────────────────────────────────────────
+    frag.appendChild(_sectionMulti('INTRODUCTION', [
+        'My name is Hennie Kotze. I am a Stellenbosch-based senior software developer and an avid ' +
+        'QGIS enthusiast looking for work or employment in any capacity where my skills could be of use to you.',
+        'Using GLS\'s own municipal domain as the subject and inspiration, I developed this interactive ' +
+        'viewer as a proactive initiative to demonstrate my understanding of how spatial data and software ' +
+        'development intersect in practice.',
+    ]));
 
-    // Portrait + Introduction (portrait floats left)
-    const introWrap = document.createElement('div');
-    introWrap.style.cssText = 'overflow: hidden; margin-bottom: 40px;';
-
-    const portrait = document.createElement('div');
-    portrait.style.cssText = `
-        float: left;
-        width: 160px; height: 200px;
-        background: #141414;
-        border: 1px solid #2a2a2a;
-        margin: 0 28px 12px 0;
-        display: flex; align-items: center; justify-content: center;
-        flex-direction: column; gap: 6px;
-        flex-shrink: 0;
-    `;
-    portrait.innerHTML = `
-        <span style="color:#333; font-size:11px; letter-spacing:0.08em; text-align:center; line-height:1.6;">
-            [ Portrait:<br>Hennie Kotze ]
-        </span>
-    `;
-
-    introWrap.appendChild(portrait);
-    introWrap.appendChild(_section('INTRODUCTION',
-        'My name is Hennie Kotze — a Stellenbosch-based senior developer and QGIS enthusiast. ' +
-        'This viewer is a proactive initiative, not a response to an advertised position. ' +
-        'I built it to demonstrate how spatial data expertise and software engineering ' +
-        'intersect in practice, using GLS\'s own municipal domain as the subject.'
-    ));
-    frag.appendChild(introWrap);
-
-    // QGIS placeholder 1
-    frag.appendChild(_qgisPlaceholder('QGIS: source data overview'));
-
-    // WPRS document image + caption
+    // ── WPRS document image ───────────────────────────────────────────────────
     const wprsBlock = document.createElement('div');
     wprsBlock.style.cssText = 'margin-bottom: 36px;';
     const wprsImg = document.createElement('img');
@@ -345,10 +311,8 @@ function _buildNarrative() {
     wprsImg.style.cssText = 'width: 100%; border: 1px solid #1e1e1e; display: block;';
     const wprsCaption = document.createElement('p');
     wprsCaption.textContent =
-        'Water Distribution System — Pipe Replacement Study, prepared by GLS for the Stellenbosch Municipality (June 2019). ' +
-        'No publicly available GIS data exists for the municipal pipe network, so this document ' +
-        'was used as the primary source: pipe routes were georeferenced manually in QGIS against ' +
-        'aerial imagery, then digitised, attributed, and exported as GeoJSON for use in this viewer.';
+        'Water Distribution System — Pipe Replacement Study, prepared by GLS for the ' +
+        'Stellenbosch Municipality (June 2019).';
     wprsCaption.style.cssText = `
         font-size: 13px; font-style: italic; color: #555;
         line-height: 1.7; margin: 10px 0 0;
@@ -357,26 +321,23 @@ function _buildNarrative() {
     wprsBlock.appendChild(wprsCaption);
     frag.appendChild(wprsBlock);
 
-    // Pipeline section
-    frag.appendChild(_section('PIPELINE',
+    // ── STELLENBOSCH WATER PIPE NETWORK ───────────────────────────────────────
+    frag.appendChild(_sectionMulti('STELLENBOSCH WATER PIPE NETWORK', [
         'No publicly available GIS data exists for the Stellenbosch municipal pipe network. ' +
         'The pipe routes visible in this viewer were derived by georeferencing GLS\'s Water Distribution ' +
-        'System — Pipe Replacement Study (June 2019) against aerial imagery in QGIS, then digitised, ' +
-        'attributed with diameter and material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
+        'System — Pipe Replacement Study (June 2019) in QGIS, then digitised, attributed with diameter ' +
+        'and material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
         'parses the coordinates, aligns them to a DEM-derived terrain mesh, and renders animated pipe ' +
         'flow in real time. The elevation model and satellite tiles were also sourced and processed ' +
-        'entirely in QGIS before being handed off to the web renderer.'
-    ));
+        'entirely in QGIS before being handed off to the web renderer.',
+    ]));
 
-    // QGIS placeholder 2
+    // ── QGIS screenshot placeholder ───────────────────────────────────────────
     frag.appendChild(_qgisPlaceholder('QGIS: network topology'));
 
-    // QGIS logo
+    // ── QGIS logo ─────────────────────────────────────────────────────────────
     const qgisBlock = document.createElement('div');
-    qgisBlock.style.cssText = `
-        display: flex; align-items: center; gap: 20px;
-        margin-bottom: 36px;
-    `;
+    qgisBlock.style.cssText = 'display: flex; align-items: center; gap: 20px; margin-bottom: 36px;';
     const qgisImg = document.createElement('img');
     qgisImg.src = 'qgis_logo.png';
     qgisImg.alt = 'QGIS';
@@ -388,17 +349,38 @@ function _buildNarrative() {
     qgisBlock.appendChild(qgisCaption);
     frag.appendChild(qgisBlock);
 
-    // Skills section
-    frag.appendChild(_section('SKILLS',
-        'Spatial data wrangling (QGIS, Python, pyproj), web-based 3D visualisation ' +
-        '(Three.js, WebGL GLSL), and the judgement to connect them cleanly — these are what I bring to GLS. ' +
-        'I am a seasoned developer with a wide variety of development experiences, and I take initiative. ' +
-        'I have been using QGIS for personal projects for many years and was a contributor to the GEEST and ' +
-        'GEEST2 projects (Kartoza / World Bank) — open-source spatial tools for gender equality analysis. ' +
-        'I processed every layer you see in this viewer myself.'
-    ));
+    // ── SKILLS AND EXPERIENCE ─────────────────────────────────────────────────
+    frag.appendChild(_sectionMulti('SKILLS AND EXPERIENCE', [
+        'Spatial data wrangling (QGIS, Python, PostGIS), web-based 3D visualisation (Three.js, WebGL GLSL). ' +
+        'I am a seasoned developer with a wide variety of development experiences, and I take initiative.',
+        'I have been using QGIS for personal projects for many years and was a contributor to the open-source ' +
+        'GEEST and GEEST2 projects (Kartoza\u00a0/\u00a0World Bank), but I would like to turn my hobby into a source of income.',
+        'Previously in my career I have also developed simulation software, among others, for the SAAF ' +
+        '(Rooivalk Attack Helicopter), Sightlines\u00a0/\u00a0Phambili (waste management services) for a project at SASOL, ' +
+        'and for an automated adaptation of the Peinemann IBC-5 bundle cleaning machine.',
+    ]));
 
-    // Availability section
+    // ── RELEVANT QUALIFICATIONS ───────────────────────────────────────────────
+    const qualWrap = document.createElement('div');
+    qualWrap.style.cssText = 'margin-bottom: 36px;';
+    const qualLabel = document.createElement('div');
+    qualLabel.textContent = 'RELEVANT QUALIFICATIONS';
+    qualLabel.style.cssText = `
+        font-size: 13px; font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #888; margin-bottom: 10px;
+    `;
+    const qualBody = document.createElement('p');
+    qualBody.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.8; margin: 0;';
+    qualBody.innerHTML =
+        'I obtained a certificate from the Centre for Geographical Analysis (University of Stellenbosch) ' +
+        'in 2018 after completing the <em>Introduction to GIS</em> short course. The course was designed ' +
+        'for ArcGIS but I performed all of the activities using QGIS (together with GDAL and SCP).';
+    qualWrap.appendChild(qualLabel);
+    qualWrap.appendChild(qualBody);
+    frag.appendChild(qualWrap);
+
+    // ── AVAILABILITY ──────────────────────────────────────────────────────────
     const availWrap = document.createElement('div');
     availWrap.style.cssText = 'margin-bottom: 36px;';
     const availLabel = document.createElement('div');
@@ -410,14 +392,11 @@ function _buildNarrative() {
     `;
     const availItems = [
         'Available for once-off project work, contract work, or a permanent position.',
-        'I prefer remote work due to transport constraints, but I can make a plan when needed.',
+        'I prefer remote work due to (hopefully temporary) transport constraints, but I can make a plan when needed. I live in Onder-Papegaaiberg, Stellenbosch.',
         'Available to start immediately.',
     ];
     const availList = document.createElement('ul');
-    availList.style.cssText = `
-        margin: 0; padding-left: 18px;
-        display: flex; flex-direction: column; gap: 8px;
-    `;
+    availList.style.cssText = 'margin: 0; padding-left: 18px; display: flex; flex-direction: column; gap: 8px;';
     for (const text of availItems) {
         const li = document.createElement('li');
         li.textContent = text;
@@ -428,7 +407,7 @@ function _buildNarrative() {
     availWrap.appendChild(availList);
     frag.appendChild(availWrap);
 
-    // Contact details
+    // ── CONTACT ───────────────────────────────────────────────────────────────
     const contact = document.createElement('div');
     contact.style.cssText = 'margin-bottom: 48px;';
     const contactLabel = document.createElement('div');
@@ -452,23 +431,19 @@ function _buildNarrative() {
     contact.appendChild(contactBody);
     frag.appendChild(contact);
 
-    // Claude Code credit
+    // ── Claude Code credit ────────────────────────────────────────────────────
     const claudeNote = document.createElement('p');
     claudeNote.textContent = 'This viewer was developed with the assistance of Claude Code by Anthropic.';
-    claudeNote.style.cssText = `
-        font-size: 12px; color: #333;
-        line-height: 1.6; margin-bottom: 48px;
-        font-style: italic;
-    `;
+    claudeNote.style.cssText = 'font-size: 12px; color: #333; line-height: 1.6; margin-bottom: 48px; font-style: italic;';
     frag.appendChild(claudeNote);
 
     return frag;
 }
 
-function _section(labelText, bodyText) {
+// Renders a section with a label and one or more body paragraphs.
+function _sectionMulti(labelText, paragraphs) {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'margin-bottom: 36px;';
-
     const label = document.createElement('div');
     label.textContent = labelText;
     label.style.cssText = `
@@ -476,18 +451,16 @@ function _section(labelText, bodyText) {
         letter-spacing: 0.14em; text-transform: uppercase;
         color: #888; margin-bottom: 10px;
     `;
-
-    const body = document.createElement('p');
-    body.textContent = bodyText;
-    body.style.cssText = `
-        font-size: 16px; font-style: italic;
-        color: #999; line-height: 1.8; margin: 0;
-    `;
-
     wrap.appendChild(label);
-    wrap.appendChild(body);
+    for (const text of paragraphs) {
+        const p = document.createElement('p');
+        p.textContent = text;
+        p.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.8; margin: 0 0 12px;';
+        wrap.appendChild(p);
+    }
     return wrap;
 }
+
 
 function _qgisPlaceholder(labelText) {
     const wrap = document.createElement('div');
