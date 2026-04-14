@@ -821,7 +821,7 @@ let _filterTotal      = 0;    // pre-tallied at _buildFilterUI time
 let _filterTotalLen   = 0;    // pre-tallied total length in metres
 
 function _filterCountHTML(n, lengthM) {
-    const lenStr = lengthM != null ? ` <span style="color:#00ccff">(${lengthM.toFixed(2)} m)</span>` : '';
+    const lenStr = lengthM != null ? ` <span style="color:#00ccff">(${lengthM.toLocaleString('en-ZA', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m)</span>` : '';
     return `<span style="color:#ff3333">${n}</span><span style="color:#00ccff"> / ${_filterTotal} pipe segments selected</span>${lenStr}`;
 }
 
