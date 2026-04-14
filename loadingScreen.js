@@ -294,7 +294,28 @@ function _buildNarrative() {
     const frag = document.createDocumentFragment();
 
     // ── INTRODUCTION ──────────────────────────────────────────────────────────
-    frag.appendChild(_sectionMulti('INTRODUCTION', [
+    const introLabel = document.createElement('div');
+    introLabel.textContent = 'INTRODUCTION';
+    introLabel.style.cssText = `
+        font-size: 14px; font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #888; margin-bottom: 10px;
+    `;
+    frag.appendChild(introLabel);
+
+    const headshot = document.createElement('img');
+    headshot.src = 'headshot.png';
+    headshot.alt = 'Hennie Kotze';
+    headshot.style.cssText = `
+        width: 120px; height: 200px;
+        object-fit: cover;
+        display: block;
+        margin-bottom: 20px;
+        border: 1px solid #2a2a2a;
+    `;
+    frag.appendChild(headshot);
+
+    frag.appendChild(_sectionMulti(null, [
         'My name is Hennie Kotze. I am a Stellenbosch-based senior software developer and an avid ' +
         'QGIS enthusiast looking for work or employment in any capacity where my skills could be of use to you.',
         'Using GLS\'s own municipal domain as the subject and inspiration, I developed this interactive ' +
@@ -458,14 +479,16 @@ function _buildNarrative() {
 function _sectionMulti(labelText, paragraphs) {
     const wrap = document.createElement('div');
     wrap.style.cssText = 'margin-bottom: 36px;';
-    const label = document.createElement('div');
-    label.textContent = labelText;
-    label.style.cssText = `
-        font-size: 14px; font-weight: 600;
-        letter-spacing: 0.14em; text-transform: uppercase;
-        color: #888; margin-bottom: 10px;
-    `;
-    wrap.appendChild(label);
+    if (labelText) {
+        const label = document.createElement('div');
+        label.textContent = labelText;
+        label.style.cssText = `
+            font-size: 14px; font-weight: 600;
+            letter-spacing: 0.14em; text-transform: uppercase;
+            color: #888; margin-bottom: 10px;
+        `;
+        wrap.appendChild(label);
+    }
     for (const text of paragraphs) {
         const p = document.createElement('p');
         p.style.cssText = 'font-size: 17px; color: #b0b0b0; line-height: 1.8; margin: 0 0 12px;';
