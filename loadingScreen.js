@@ -391,10 +391,42 @@ function _buildNarrative() {
     // Skills section
     frag.appendChild(_section('SKILLS',
         'Spatial data wrangling (QGIS, Python, pyproj), web-based 3D visualisation ' +
-        '(Three.js, WebGL GLSL), full-stack development, and the judgement to connect ' +
-        'them cleanly — these are what I bring to GLS. I take initiative, I understand ' +
-        'your domain, and I processed every layer you see below myself.'
+        '(Three.js, WebGL GLSL), and the judgement to connect them cleanly — these are what I bring to GLS. ' +
+        'I am a seasoned developer with a wide variety of development experiences, and I take initiative. ' +
+        'I have been using QGIS for personal projects for many years and was a contributor to the GEEST and ' +
+        'GEEST2 projects (Kartoza / World Bank) — open-source spatial tools for gender equality analysis. ' +
+        'I processed every layer you see in this viewer myself.'
     ));
+
+    // Availability section
+    const availWrap = document.createElement('div');
+    availWrap.style.cssText = 'margin-bottom: 36px;';
+    const availLabel = document.createElement('div');
+    availLabel.textContent = 'AVAILABILITY';
+    availLabel.style.cssText = `
+        font-size: 13px; font-weight: 600;
+        letter-spacing: 0.14em; text-transform: uppercase;
+        color: #888; margin-bottom: 10px;
+    `;
+    const availItems = [
+        'Available for once-off project work, contract work, or a permanent position.',
+        'I prefer remote work due to transport constraints, but I can make a plan when needed.',
+        'Available to start immediately.',
+    ];
+    const availList = document.createElement('ul');
+    availList.style.cssText = `
+        margin: 0; padding-left: 18px;
+        display: flex; flex-direction: column; gap: 8px;
+    `;
+    for (const text of availItems) {
+        const li = document.createElement('li');
+        li.textContent = text;
+        li.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.7;';
+        availList.appendChild(li);
+    }
+    availWrap.appendChild(availLabel);
+    availWrap.appendChild(availList);
+    frag.appendChild(availWrap);
 
     // Contact details
     const contact = document.createElement('div');
