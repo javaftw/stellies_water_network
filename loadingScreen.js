@@ -213,24 +213,9 @@ function _buildDOM() {
         background: #0d0d0d;
         border-top: 1px solid #1a1a1a;
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         align-items: stretch;
     `;
-
-    // Status header
-    const statusHeader = document.createElement('div');
-    statusHeader.id = 'ls-status';
-    statusHeader.textContent = 'LOADING RESOURCES — PLEASE WAIT';
-    statusHeader.style.cssText = `
-        text-align: center;
-        padding: 10px 0 6px;
-        font-size: 11px; font-weight: 600;
-        letter-spacing: 0.18em; text-transform: uppercase;
-        color: #00ccff;
-        animation: ls-status-pulse 2s ease-in-out infinite;
-        flex-shrink: 0;
-    `;
-    footer.appendChild(statusHeader);
 
     // Bars + CTA row
     const footerRow = document.createElement('div');
@@ -290,9 +275,23 @@ function _buildDOM() {
     const ctaWrap = document.createElement('div');
     ctaWrap.style.cssText = `
         flex: 1;
-        display: flex; align-items: center; justify-content: center;
+        display: flex; flex-direction: column; align-items: center; justify-content: center;
+        gap: 14px;
         border-left: 1px solid #1a1a1a;
     `;
+
+    const statusHeader = document.createElement('div');
+    statusHeader.id = 'ls-status';
+    statusHeader.textContent = 'LOADING RESOURCES — PLEASE WAIT';
+    statusHeader.style.cssText = `
+        text-align: center;
+        font-size: 10px; font-weight: 600;
+        letter-spacing: 0.16em; text-transform: uppercase;
+        color: #00ccff;
+        animation: ls-status-pulse 2s ease-in-out infinite;
+        padding: 0 12px;
+    `;
+    ctaWrap.appendChild(statusHeader);
 
     const cta = document.createElement('button');
     cta.id = 'ls-cta';
@@ -317,7 +316,7 @@ function _buildDOM() {
     ctaWrap.appendChild(cta);
     footerRow.appendChild(barsEl);
     footerRow.appendChild(ctaWrap);
-    footer.appendChild(footerRow);
+    footer.appendChild(footerRow); // footer is back to row layout; footerRow fills it
 
     overlay.appendChild(skip);
     overlay.appendChild(body);
