@@ -332,8 +332,22 @@ function _buildNarrative() {
         'entirely in QGIS before being handed off to the web renderer.',
     ]));
 
-    // ── QGIS screenshot placeholder ───────────────────────────────────────────
-    frag.appendChild(_qgisPlaceholder('QGIS: network topology'));
+    // ── QGIS screenshot ───────────────────────────────────────────────────────
+    const qgisScreenBlock = document.createElement('div');
+    qgisScreenBlock.style.cssText = 'margin-bottom: 36px;';
+    const qgisScreenImg = document.createElement('img');
+    qgisScreenImg.src = 'qgis_screenshot.png';
+    qgisScreenImg.alt = 'QGIS — Stellenbosch water pipe network';
+    qgisScreenImg.style.cssText = 'width: 100%; border: 1px solid #1e1e1e; display: block;';
+    const qgisScreenCaption = document.createElement('p');
+    qgisScreenCaption.textContent = 'QGIS — digitised pipe network overlaid on aerial imagery, Stellenbosch.';
+    qgisScreenCaption.style.cssText = `
+        font-size: 13px; font-style: italic; color: #555;
+        line-height: 1.7; margin: 10px 0 0;
+    `;
+    qgisScreenBlock.appendChild(qgisScreenImg);
+    qgisScreenBlock.appendChild(qgisScreenCaption);
+    frag.appendChild(qgisScreenBlock);
 
     // ── QGIS logo ─────────────────────────────────────────────────────────────
     const qgisBlock = document.createElement('div');
@@ -458,22 +472,5 @@ function _sectionMulti(labelText, paragraphs) {
         p.style.cssText = 'font-size: 16px; font-style: italic; color: #999; line-height: 1.8; margin: 0 0 12px;';
         wrap.appendChild(p);
     }
-    return wrap;
-}
-
-
-function _qgisPlaceholder(labelText) {
-    const wrap = document.createElement('div');
-    wrap.style.cssText = `
-        width: 100%; height: 180px;
-        background: #0a0a0a;
-        border: 1px dashed #222;
-        display: flex; align-items: center; justify-content: center;
-        margin-bottom: 36px;
-    `;
-    const lbl = document.createElement('span');
-    lbl.textContent = '[ ' + labelText + ' ]';
-    lbl.style.cssText = 'font-size: 12px; color: #2a2a2a; letter-spacing: 0.06em;';
-    wrap.appendChild(lbl);
     return wrap;
 }
