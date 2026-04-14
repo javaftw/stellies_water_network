@@ -1925,7 +1925,7 @@ function _initCompass() {
     canvas.width  = SIZE * dpr;
     canvas.height = SIZE * dpr;
     canvas.style.cssText = `position:fixed;top:16px;left:16px;width:${SIZE}px;height:${SIZE}px;` +
-                           `border-radius:50%;pointer-events:none;z-index:200;`;
+                           `border-radius:50%;pointer-events:none;z-index:950;`;
     document.body.appendChild(canvas);
     _compassCanvas = canvas;
 }
