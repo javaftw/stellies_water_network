@@ -1825,7 +1825,7 @@ function _createGuideOverlay() {
         }, doneMs);
     }
 
-    window.addEventListener('loading-complete', _runIntroSequence, { once: true });
+    setTimeout(_runIntroSequence, 500);
 
     document.body.appendChild(overlay);
 }
