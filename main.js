@@ -1860,6 +1860,9 @@ function _createGuideOverlay() {
 let _pipeTime     = 0;
 let _lastFrameTime = 0;
 
+// Compass canvas — declared here so animate() can reference it before _initCompass() runs
+let _compassCanvas = null;
+
 // Animation loop
 function animate() {
     requestAnimationFrame(animate);
@@ -1915,8 +1918,6 @@ function animate() {
 animate();
 
 // ─── 3D Compass (2D canvas with perspective foreshortening) ──────────────────
-let _compassCanvas = null;
-
 function _initCompass() {
     const SIZE = 120;
     const dpr  = window.devicePixelRatio || 1;
