@@ -1172,8 +1172,8 @@ loader.load(
                 child.castShadow    = true;
                 child.receiveShadow = true;
                 child.material      = buildingMaterial;
-                // Shift buildings down by 2 units
-                child.position.y   -= 2;
+                // Shift buildings down by 4 units
+                child.position.y   -= 4;
             }
         });
 		
