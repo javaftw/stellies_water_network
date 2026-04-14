@@ -89,6 +89,13 @@ function _showCTA() {
         cta.style.opacity   = '1';
         cta.style.animation = 'ls-pulse 2s ease-in-out infinite';
     });
+
+    const status = document.getElementById('ls-status');
+    if (status) {
+        status.textContent  = 'RESOURCES LOADED — READY';
+        status.style.color  = '#00ff88';
+        status.style.animation = 'ls-status-done 2s ease-in-out infinite';
+    }
 }
 
 function _dismiss() {
@@ -161,6 +168,14 @@ function _buildDOM() {
             55%  { background: #00ff88; box-shadow: 0 0 10px rgba(0,255,136,0.7), 0 0 22px rgba(0,255,136,0.3); }
             100% { background: #00ccff; box-shadow: none; }
         }
+        @keyframes ls-status-pulse {
+            0%, 100% { text-shadow: 0 0 8px rgba(0,204,255,0.5), 0 0 20px rgba(0,204,255,0.2); }
+            50%       { text-shadow: 0 0 16px rgba(0,204,255,0.9), 0 0 40px rgba(0,204,255,0.4); }
+        }
+        @keyframes ls-status-done {
+            0%, 100% { text-shadow: 0 0 8px rgba(0,255,136,0.5), 0 0 20px rgba(0,255,136,0.2); }
+            50%       { text-shadow: 0 0 16px rgba(0,255,136,0.9), 0 0 40px rgba(0,255,136,0.4); }
+        }
     `;
     document.head.appendChild(styleEl);
 
@@ -198,8 +213,30 @@ function _buildDOM() {
         background: #0d0d0d;
         border-top: 1px solid #1a1a1a;
         display: flex;
-        flex-direction: row;
+        flex-direction: column;
         align-items: stretch;
+    `;
+
+    // Status header
+    const statusHeader = document.createElement('div');
+    statusHeader.id = 'ls-status';
+    statusHeader.textContent = 'LOADING RESOURCES — PLEASE WAIT';
+    statusHeader.style.cssText = `
+        text-align: center;
+        padding: 10px 0 6px;
+        font-size: 11px; font-weight: 600;
+        letter-spacing: 0.18em; text-transform: uppercase;
+        color: #00ccff;
+        animation: ls-status-pulse 2s ease-in-out infinite;
+        flex-shrink: 0;
+    `;
+    footer.appendChild(statusHeader);
+
+    // Bars + CTA row
+    const footerRow = document.createElement('div');
+    footerRow.style.cssText = `
+        display: flex; flex-direction: row;
+        align-items: stretch; flex: 1; min-height: 0;
     `;
 
     // Left 75% — progress bars
@@ -278,8 +315,9 @@ function _buildDOM() {
     cta.addEventListener('click', _dismiss);
 
     ctaWrap.appendChild(cta);
-    footer.appendChild(barsEl);
-    footer.appendChild(ctaWrap);
+    footerRow.appendChild(barsEl);
+    footerRow.appendChild(ctaWrap);
+    footer.appendChild(footerRow);
 
     overlay.appendChild(skip);
     overlay.appendChild(body);
