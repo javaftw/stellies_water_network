@@ -65,7 +65,7 @@ let _cameraMarker     = null;
 let _fovPolygon       = null;
 let _conePolygon      = null;
 let _coneCentreMarker = null;
-let _collapsed        = false;
+let _collapsed        = true;
 let _lastUpdate       = 0;
 const UPDATE_INTERVAL = 1000 / 15;
 
@@ -431,7 +431,7 @@ function _buildDOM() {
         overflow: hidden;
         z-index: 200;
         transition: height 0.3s ease;
-        height: ${_openHeight}px;
+        height: 28px;
         display: flex;
         flex-direction: column;
         font-family: Arial, sans-serif;
@@ -630,4 +630,15 @@ function _toggleCollapse() {
         toggle.textContent = '▼';
         setTimeout(() => _map.invalidateSize(), 310);
     }
+}
+
+// Programmatically expand the minimap (used by the intro sequence in main.js).
+export function expandMinimap() {
+    if (!_collapsed) return;
+    _collapsed = false;
+    const container = document.getElementById('minimap-container');
+    const toggle    = document.getElementById('minimap-toggle');
+    if (container) container.style.height = `${_openHeight}px`;
+    if (toggle)    toggle.textContent = '▼';
+    setTimeout(() => { if (_map) _map.invalidateSize(); }, 310);
 }

@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import { initTerrain, getTerrainMesh, sampleTerrainElevation } from './terrain.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { initMinimap, updateMinimap, addMinimapLayers, highlightMinimapFeature, clearMinimapHighlight, highlightFilterFeatures, clearFilterHighlight } from './minimap.js';
+import { initMinimap, updateMinimap, addMinimapLayers, highlightMinimapFeature, clearMinimapHighlight, highlightFilterFeatures, clearFilterHighlight, expandMinimap } from './minimap.js';
 import { ORIGIN_X, ORIGIN_Y } from './constants.js';
 import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
@@ -517,7 +517,7 @@ function makeSliderRow(labelText, min, max, value, onInput) {
 }
 
 // --- Panel 1: Time of Day ---
-const todBody = makePanel('☀  Time of Day');
+const todBody = makePanel('☀  Time of Day', false);
 
 function sliderToTimeString(val) {
     const totalMinutes = (Number(val) / 100) * 24 * 60;
@@ -644,7 +644,7 @@ function _updateHydroBars(t) {
 _updateHydroBars(0.5);
 
 // --- Panel 2: X-Ray View ---
-const xrayBody = makePanel('🔭  X-Ray View');
+const xrayBody = makePanel('🔭  X-Ray View', false);
 const coneState = { halfAngleDeg: 25, xrayEnabled: true };
 
 const { input: coneSlider, readout: coneReadout, row: coneRow } = makeSliderRow(
@@ -712,7 +712,7 @@ toggleInput.addEventListener('change', () => applyXrayToggle(toggleInput.checked
 // --- Panel 3: Inspect Feature ---
 const inspectState = { active: false, selectedFeature: null, selectedMesh: null };
 
-const inspectBody = makePanel('🔍  Inspect Feature');
+const inspectBody = makePanel('🔍  Inspect Feature', false);
 inspectBody.style.height   = '255px';
 inspectBody.style.overflow = 'hidden';
 inspectBody.style.paddingBottom = '0';
@@ -820,7 +820,7 @@ inspectBody.previousElementSibling.addEventListener('click', () => {
 const _filterActive = { materials: new Set(), diameters: new Set() };
 let _filterCheckboxes = [];   // { type, value, input } for bulk-uncheck on collapse
 
-const filterBody = makePanel('⚗  Filter Pipelines', true);
+const filterBody = makePanel('⚗  Filter Pipelines', false);
 filterBody.style.maxHeight    = '300px';
 filterBody.style.overflowY    = 'auto';
 filterBody.style.paddingBottom = '8px';
@@ -1705,14 +1705,13 @@ function _createGuideOverlay() {
     const btn = card.querySelector('#guide-dismiss');
     btn.addEventListener('mouseover', () => { btn.style.background = 'rgba(0,204,255,0.1)'; });
     btn.addEventListener('mouseout',  () => { btn.style.background = 'transparent'; });
-    btn.addEventListener('click',     () => overlay.remove());
 
     // ── Annotation helper ─────────────────────────────────────────────────────
     // dir 'right': box + right-pointing tip  (for right-side panels)
     // dir 'left':  left-pointing tip + box   (for minimap on the left)
     function makeAnnotation(text, dir) {
         const wrap = document.createElement('div');
-        wrap.style.cssText = `position:absolute; display:flex; align-items:center; pointer-events:none;`;
+        wrap.style.cssText = `position:absolute; display:flex; align-items:center; pointer-events:none; opacity:0; transition:opacity 0.2s ease;`;
 
         const BOX_BG    = 'rgba(160,0,0,0.88)';
         const TIP_COLOR = 'rgba(160,0,0,0.88)';
@@ -1761,26 +1760,68 @@ function _createGuideOverlay() {
     // ── Minimap annotation ────────────────────────────────────────────────────
     const minimapAnn = makeAnnotation('2D overview — click or drag to navigate', 'left');
 
-    // ── Position everything after the browser has laid out ────────────────────
-    requestAnimationFrame(() => {
-        // Panel annotations: right edge of annotation flush with left edge of panel stack, minus gap
-        const stackLeft = todBody.parentElement.parentElement.getBoundingClientRect().left;
-        const rightOffset = window.innerWidth - stackLeft + 10;  // CSS right value
+    // ── Helper: expand a panel body programmatically ─────────────────────────
+    function expandPanel(body) {
+        body.style.display = 'block';
+        body.previousElementSibling.lastElementChild.textContent = '▲';
+    }
 
-        for (const { el, body } of panelAnns) {
-            const r = body.parentElement.getBoundingClientRect();
-            el.style.right = `${rightOffset}px`;
-            el.style.top   = `${r.top + 9}px`;  // align with panel header
-        }
+    // ── Helper: position a panel annotation at the panel's current location ──
+    function positionPanelAnn(el, body) {
+        const stackLeft  = todBody.parentElement.parentElement.getBoundingClientRect().left;
+        const rightOffset = window.innerWidth - stackLeft + 10;
+        const r = body.parentElement.getBoundingClientRect();
+        el.style.right = `${rightOffset}px`;
+        el.style.top   = `${r.top + 9}px`;
+    }
 
-        // Minimap annotation: just to the right of the minimap, vertically centred
+    // ── Helper: position the minimap annotation ───────────────────────────────
+    function positionMinimapAnn() {
         const mm = document.getElementById('minimap-container');
-        if (mm) {
-            const r = mm.getBoundingClientRect();
-            minimapAnn.style.left = `${r.right + 10}px`;
-            minimapAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
-        }
+        if (!mm) return;
+        const r = mm.getBoundingClientRect();
+        minimapAnn.style.left = `${r.right + 10}px`;
+        minimapAnn.style.top  = `${r.top + r.height / 2 - 14}px`;
+    }
 
+    // ── Intro sequence fired by Continue ─────────────────────────────────────
+    btn.addEventListener('click', () => {
+        card.style.display   = 'none';
+        overlay.style.background = 'transparent';
+
+        const STEP = 300; // ms between each panel reveal
+
+        const panelSteps = [
+            { body: todBody,     annItem: panelAnns[0] },
+            { body: xrayBody,    annItem: panelAnns[1] },
+            { body: inspectBody, annItem: panelAnns[2] },
+            { body: filterBody,  annItem: panelAnns[3] },
+        ];
+
+        panelSteps.forEach(({ body, annItem }, i) => {
+            setTimeout(() => {
+                expandPanel(body);
+                positionPanelAnn(annItem.el, body);
+                annItem.el.style.opacity = '1';
+            }, i * STEP);
+        });
+
+        // Minimap: expand then wait for CSS transition before positioning
+        setTimeout(() => {
+            expandMinimap();
+            setTimeout(() => {
+                positionMinimapAnn();
+                minimapAnn.style.opacity = '1';
+            }, 320); // wait for minimap height transition (0.3s)
+        }, panelSteps.length * STEP);
+
+        // Fade out and remove overlay after all annotations are visible
+        const totalMs = panelSteps.length * STEP + 320 + 600;
+        setTimeout(() => {
+            overlay.style.transition = 'opacity 0.5s ease';
+            overlay.style.opacity    = '0';
+            setTimeout(() => overlay.remove(), 500);
+        }, totalMs);
     });
 
     document.body.appendChild(overlay);
