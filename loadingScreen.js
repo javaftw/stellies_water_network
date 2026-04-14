@@ -340,7 +340,7 @@ function _buildNarrative() {
     qgisScreenImg.alt = 'QGIS — Stellenbosch water pipe network';
     qgisScreenImg.style.cssText = 'width: 100%; border: 1px solid #1e1e1e; display: block;';
     const qgisScreenCaption = document.createElement('p');
-    qgisScreenCaption.innerHTML = '<strong>QGIS</strong> — digitised pipe network overlaid on aerial imagery, Stellenbosch.';
+    qgisScreenCaption.innerHTML = 'Georeferencing the pipeline network, as published in the Pipe Replacement Study document, in <strong>QGIS</strong>.';
     qgisScreenCaption.style.cssText = `
         font-size: 14px; font-style: italic; color: #777;
         line-height: 1.7; margin: 10px 0 0;
