@@ -1584,6 +1584,7 @@ function _makeSuburbLabel(text, hexColor) {
 }
 
 const _suburbGroup       = new THREE.Group();
+_suburbGroup.renderOrder = 2;    // render after transparent buildings so labels are never obscured
 const _suburbLineMats    = [];   // kept so resolution can be updated on resize
 
 fetch('suburbs.geojson')
