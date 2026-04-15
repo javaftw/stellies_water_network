@@ -354,7 +354,7 @@ function _buildNarrative() {
 
     frag.appendChild(_sectionMulti(null, [
         'My name is Hennie Kotze. I am a Stellenbosch-based senior software developer and an avid ' +
-        'QGIS enthusiast looking for work or employment in any capacity where my skills could be of use to you.',
+        '<strong>QGIS</strong> enthusiast looking for work or employment in any capacity where my skills could be of use to you.',
         'Using GLS\'s own municipal domain as the subject and inspiration, I envisaged and developed this ' +
         'interactive viewer from scratch (no boilerplate or prefab components) as a proactive initiative ' +
         'to demonstrate my understanding of how spatial data and software development intersect in practice.',
@@ -382,7 +382,7 @@ function _buildNarrative() {
     // ── STELLENBOSCH WATER PIPE NETWORK ───────────────────────────────────────
     frag.appendChild(_sectionMulti('STELLENBOSCH WATER PIPE NETWORK', [
         'No publicly available GIS data exists for the Stellenbosch municipal pipe network. ' +
-        'The pipe routes visible in this viewer were derived by georeferencing <em>GLS\'s Water Distribution ' +
+        'The pipe routes visible in this viewer were derived by georeferencing images found in <em>GLS\'s Water Distribution ' +
         'System - Pipe Replacement Study</em> (June 2019) in <strong>QGIS</strong>, then digitised, attributed with diameter ' +
         'and material, reprojected to UTM\u00a034S, and exported as GeoJSON. A custom Three.js renderer ' +
         'parses the coordinates, aligns them to a DEM-derived terrain mesh, and renders animated pipe ' +
