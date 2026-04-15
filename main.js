@@ -42,7 +42,7 @@ document.getElementById('canvas-container').appendChild(renderer.domElement);
 const cameraState = {
     theta:      0,
     phi:        Math.PI / 4,
-    radius:     1200,
+    radius:     1700,
     target:     new THREE.Vector3(0, 0, 0),
     isDragging: false,
     isPanning:  false,
