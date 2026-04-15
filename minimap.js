@@ -76,6 +76,9 @@ let _prevXrayEnabled = null;  // null forces first-call sync
 // Tracks the full expanded height; updated when addMinimapLayers inserts the toolbar
 let _openHeight = MAP_H + 28;
 
+// Toolbar reference — stored so addSuburbsLayer can append to it later
+let _toolbar = null;
+
 // Highlight layer — replaced each time a feature is selected, removed on clear
 let _highlightLayer = null;
 
@@ -218,7 +221,8 @@ export function addMinimapLayers(pipelines, reservoirs, pumpStations) {
     }).addTo(_map);
 
     // ── Toolbar ───────────────────────────────────────────────────────────────
-    const toolbar = document.createElement('div');
+    _toolbar = document.createElement('div');
+    const toolbar = _toolbar;
     toolbar.style.cssText = `
         min-height: 28px;
         background: #161616;
@@ -256,6 +260,45 @@ export function addMinimapLayers(pipelines, reservoirs, pumpStations) {
     // Grow open height to include the 28 px toolbar row
     _openHeight = MAP_H + 28 + 28;
     if (!_collapsed) container.style.height = `${_openHeight}px`;
+}
+
+// Adds suburb outlines to the minimap toolbar + Leaflet layer.
+// colorMap: { suburbName: '#rrggbb' } — generated in main.js so 3D and 2D share colours.
+// Dispatches window CustomEvent 'suburbs-3d-toggle' { detail: { visible: bool } } on change.
+export function addSuburbsLayer(data, colorMap) {
+    if (!_map || !_toolbar) return;
+
+    const toLatLng = coords => {
+        const [lat, lon] = utmToLatLon(coords[0], coords[1]);
+        return L.latLng(lat, lon);
+    };
+
+    const suburbLayer = L.geoJSON(data, {
+        coordsToLatLng: toLatLng,
+        style: feat => ({
+            color:   colorMap[feat.properties.SUBURB] || '#ffffff',
+            weight:  2,
+            opacity: 0.85,
+        }),
+        interactive: false,
+    });
+    // NOT added to map yet — checkbox starts unchecked
+
+    const lbl = document.createElement('label');
+    lbl.style.cssText = 'cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;color:#aaa;';
+    const cb = document.createElement('input');
+    cb.type    = 'checkbox';
+    cb.checked = false;
+    cb.style.cssText = 'cursor:pointer;accent-color:#00ccff;';
+    cb.addEventListener('change', () => {
+        if (cb.checked) suburbLayer.addTo(_map); else _map.removeLayer(suburbLayer);
+        window.dispatchEvent(new CustomEvent('suburbs-3d-toggle', { detail: { visible: cb.checked } }));
+    });
+    const txt = document.createElement('span');
+    txt.textContent = 'Suburbs';
+    lbl.appendChild(cb);
+    lbl.appendChild(txt);
+    _toolbar.appendChild(lbl);
 }
 
 export function updateMinimap(camera, cameraState, coneState) {

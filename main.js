@@ -1,7 +1,10 @@
 import * as THREE from 'three';
 import { initTerrain, getTerrainMesh, sampleTerrainElevation } from './terrain.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
-import { initMinimap, updateMinimap, addMinimapLayers, highlightMinimapFeature, clearMinimapHighlight, highlightFilterFeatures, clearFilterHighlight, expandMinimap } from './minimap.js';
+import { Line2 } from 'three/addons/lines/Line2.js';
+import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
+import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
+import { initMinimap, updateMinimap, addMinimapLayers, addSuburbsLayer, highlightMinimapFeature, clearMinimapHighlight, highlightFilterFeatures, clearFilterHighlight, expandMinimap } from './minimap.js';
 import { ORIGIN_X, ORIGIN_Y } from './constants.js';
 import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
@@ -1484,6 +1487,119 @@ fetch('pump_stations.geojson')
     })
     .catch(err => { console.error('Pump station GeoJSON load error:', err); taskSubDone('infrastructure'); });
 
+// --- Suburbs ---
+// Colour helpers — golden-angle HSL for visually distinct hues
+function _hslToHex(h, s, l) {
+    s /= 100; l /= 100;
+    const a = s * Math.min(l, 1 - l);
+    const f = n => {
+        const k = (n + h / 30) % 12;
+        return Math.round(255 * (l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1)))
+            .toString(16).padStart(2, '0');
+    };
+    return '#' + f(0) + f(8) + f(4);
+}
+function _buildSuburbColorMap(names) {
+    const map = {};
+    names.forEach((name, i) => {
+        map[name] = _hslToHex(Math.round((i * 137.508) % 360), 80, 65);
+    });
+    return map;
+}
+
+function _makeSuburbLabel(text, hexColor) {
+    const W = 512, H = 80;
+    const lc  = document.createElement('canvas');
+    lc.width  = W; lc.height = H;
+    const lx  = lc.getContext('2d');
+    lx.clearRect(0, 0, W, H);
+    lx.font         = 'bold 28px Arial';
+    lx.textAlign    = 'center';
+    lx.textBaseline = 'middle';
+    lx.strokeStyle  = 'rgba(0,0,0,0.85)';
+    lx.lineWidth    = 6;
+    lx.strokeText(text, W / 2, H / 2);
+    lx.fillStyle    = hexColor;
+    lx.fillText(text, W / 2, H / 2);
+    const mat = new THREE.SpriteMaterial({
+        map: new THREE.CanvasTexture(lc),
+        transparent: true,
+        depthTest:   false,
+        depthWrite:  false,
+    });
+    const sprite = new THREE.Sprite(mat);
+    sprite.scale.set(400, 63, 1);   // world metres
+    return sprite;
+}
+
+const _suburbGroup       = new THREE.Group();
+const _suburbLineMats    = [];   // kept so resolution can be updated on resize
+
+fetch('suburbs.geojson')
+    .then(r => r.json())
+    .then(data => {
+        // Build colour map from sorted unique suburb names
+        const names    = [...new Set(data.features.map(f => f.properties.SUBURB))].sort();
+        const colorMap = _buildSuburbColorMap(names);
+
+        // Add outlines to minimap (checkbox + Leaflet layer)
+        addSuburbsLayer(data, colorMap);
+
+        // ── 3D lines — one Line2 per GeoJSON feature ─────────────────────────
+        data.features.forEach(feat => {
+            const name   = feat.properties.SUBURB;
+            const hex    = colorMap[name] || '#ffffff';
+            const coords = feat.geometry.coordinates;
+
+            const positions = [];
+            coords.forEach(([utmE, utmN]) => {
+                const sx = utmE - ORIGIN_X;
+                const sz = -(utmN - ORIGIN_Y);
+                const sy = sampleTerrainElevation(utmE, utmN) + 2;
+                positions.push(sx, sy, sz);
+            });
+            if (positions.length < 6) return;   // need at least 2 points
+
+            const geo = new LineGeometry();
+            geo.setPositions(positions);
+            const mat = new LineMaterial({
+                color:      parseInt(hex.slice(1), 16),
+                linewidth:  3,
+                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+            });
+            _suburbLineMats.push(mat);
+            const line = new Line2(geo, mat);
+            line.computeLineDistances();
+            _suburbGroup.add(line);
+        });
+
+        // ── Labels — one sprite per unique suburb, at average centroid ───────
+        const centroids = {};
+        data.features.forEach(feat => {
+            const name = feat.properties.SUBURB;
+            if (!centroids[name]) centroids[name] = { xs: [], zs: [] };
+            feat.geometry.coordinates.forEach(([utmE, utmN]) => {
+                centroids[name].xs.push(utmE - ORIGIN_X);
+                centroids[name].zs.push(-(utmN - ORIGIN_Y));
+            });
+        });
+        Object.entries(centroids).forEach(([name, { xs, zs }]) => {
+            const cx   = xs.reduce((a, b) => a + b, 0) / xs.length;
+            const cz   = zs.reduce((a, b) => a + b, 0) / zs.length;
+            const cy   = sampleTerrainElevation(cx + ORIGIN_X, -cz + ORIGIN_Y) + 20;
+            const sprite = _makeSuburbLabel(name, colorMap[name] || '#ffffff');
+            sprite.position.set(cx, cy, cz);
+            _suburbGroup.add(sprite);
+        });
+    })
+    .catch(err => console.error('Suburbs GeoJSON load error:', err));
+
+// Toggle 3D suburb group on/off when minimap checkbox changes
+window.addEventListener('suburbs-3d-toggle', e => {
+    if (e.detail.visible) scene.add(_suburbGroup);
+    else                  scene.remove(_suburbGroup);
+});
+
 // --- Shared time state ---
 // _targetTimeT  = raw value set by the slider (jumps instantly)
 // _currentTimeT = smoothly eased value used for rendering (lerps toward target)
@@ -1647,6 +1763,7 @@ function onWindowResize() {
     camera.aspect = window.innerWidth / window.innerHeight;
     camera.updateProjectionMatrix();
     renderer.setSize(window.innerWidth, window.innerHeight);
+    _suburbLineMats.forEach(m => m.resolution.set(window.innerWidth, window.innerHeight));
 }
 
 // Reusable vector for camera forward direction
