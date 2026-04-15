@@ -153,7 +153,23 @@ function _buildDOM() {
         margin: 0 auto;
         padding: 48px 32px 32px;
     `;
-    narrative.appendChild(_buildNarrative());
+
+    const _viewerMode = new URLSearchParams(window.location.search).has('viewer');
+    if (_viewerMode) {
+        const title = document.createElement('div');
+        title.textContent = 'STELLENBOSCH WATER SUPPLY VIEWER DEMO';
+        title.style.cssText = `
+            font-size: 28px;
+            font-weight: 400;
+            color: #00aaaa;
+            letter-spacing: 0.06em;
+            text-align: center;
+            margin-top: 80px;
+        `;
+        narrative.appendChild(title);
+    } else {
+        narrative.appendChild(_buildNarrative());
+    }
     body.appendChild(narrative);
 
     // ── Keyframe for CTA pulse glow ───────────────────────────────────────────
