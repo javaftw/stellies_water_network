@@ -268,13 +268,26 @@ export function addMinimapLayers(pipelines, reservoirs, pumpStations) {
 export function addSuburbsLayer(data, colorMap) {
     if (!_map || !_toolbar) return;
 
-    const toLatLng = coords => {
-        const [lat, lon] = utmToLatLon(coords[0], coords[1]);
-        return L.latLng(lat, lon);
+    // Pre-convert UTM 34S → WGS84 [lon, lat] so Leaflet's default handler works.
+    // The suburbs.geojson carries a "crs" field that Leaflet respects, which
+    // overrides our coordsToLatLng option and causes misalignment. Stripping
+    // the crs field and pre-converting coordinates avoids this entirely.
+    const wgs84Data = {
+        type: 'FeatureCollection',
+        features: data.features.map(feat => ({
+            type: 'Feature',
+            properties: feat.properties,
+            geometry: {
+                type: feat.geometry.type,
+                coordinates: feat.geometry.coordinates.map(([e, n]) => {
+                    const [lat, lon] = utmToLatLon(e, n);
+                    return [lon, lat];   // GeoJSON convention: [longitude, latitude]
+                }),
+            },
+        })),
     };
 
-    const suburbLayer = L.geoJSON(data, {
-        coordsToLatLng: toLatLng,
+    const suburbLayer = L.geoJSON(wgs84Data, {
         style: feat => ({
             color:   colorMap[feat.properties.SUBURB] || '#ffffff',
             weight:  2,
