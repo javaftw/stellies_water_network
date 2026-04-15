@@ -24,6 +24,42 @@ const FOV_MAX_DIST    = 4000;
 const CONE_MAX_RADIUS = 2000;
 const CAM_FOV_DEG     = 60;
 
+// ─── WGS84 → UTM 34S (forward Transverse Mercator, Snyder 1987) ──────────────
+// Used for minimap click/drag → scene coordinate conversion.
+function wgs84ToUtm(latDeg, lonDeg) {
+    const a   = 6378137.0;
+    const f   = 1 / 298.257223563;
+    const e2  = 2*f - f*f;
+    const ep2 = e2 / (1 - e2);
+    const k0  = 0.9996;
+    const l0  = 21.0 * Math.PI / 180;
+
+    const phi = latDeg * Math.PI / 180;
+    const lam = lonDeg * Math.PI / 180;
+
+    const sp = Math.sin(phi), cp = Math.cos(phi), tp = sp / cp;
+    const N  = a / Math.sqrt(1 - e2*sp*sp);
+    const T  = tp*tp;
+    const C  = ep2*cp*cp;
+    const A  = cp*(lam - l0);
+    const A2 = A*A, A3 = A2*A, A4 = A2*A2, A5 = A4*A, A6 = A4*A2;
+
+    const M = a*(
+          (1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256) * phi
+        - (3*e2/8 + 3*e2*e2/32 + 45*e2*e2*e2/1024)  * Math.sin(2*phi)
+        + (15*e2*e2/256 + 45*e2*e2*e2/1024)           * Math.sin(4*phi)
+        - (35*e2*e2*e2/3072)                           * Math.sin(6*phi)
+    );
+
+    const utmE = 500000 + k0*N*(
+        A + (1-T+C)*A3/6 + (5-18*T+T*T+72*C-58*ep2)*A5/120
+    );
+    const utmN = 10000000 + k0*(
+        M + N*tp*(A2/2 + (5-T+9*C+4*C*C)*A4/24 + (61-58*T+T*T+600*C-330*ep2)*A6/720)
+    );
+    return [utmE, utmN];
+}
+
 // ─── UTM 34S → WGS84 (inverse Transverse Mercator, Snyder 1987) ──────────────
 // Replaces the old linear approximation that had ~500 m systematic offset.
 // Accuracy: better than 0.1 m anywhere inside UTM Zone 34.
@@ -668,17 +704,12 @@ function _buildMap() {
 
     _map.on('drag', () => {
         const center = _map.getCenter();
-        const dLat   = center.lat - _dragPrevCenter.lat;
-        const dLon   = center.lng - _dragPrevCenter.lng;
+        const [prevE, prevN] = wgs84ToUtm(_dragPrevCenter.lat, _dragPrevCenter.lng);
+        const [curE,  curN]  = wgs84ToUtm(center.lat, center.lng);
         _dragPrevCenter = center;
 
-        // Invert the UTM linear approximation to get scene deltas
-        const dUtmE = dLon / UTM_TO_LON_A;
-        const dUtmN = dLat / UTM_TO_LAT_A;
-        // scene x = utmE − ORIGIN_X  →  dx = dUtmE
-        // scene z = −(utmN − ORIGIN_Y) →  dz = −dUtmN
         window.dispatchEvent(new CustomEvent('minimap-pan', {
-            detail: { dx: dUtmE, dz: -dUtmN },
+            detail: { dx: curE - prevE, dz: -(curN - prevN) },
         }));
     });
 
@@ -687,26 +718,13 @@ function _buildMap() {
         _dragPrevCenter = null;
     });
 
-	// Click on minimap → move camera target to that location
-_map.on('click', (e) => {
-    const lat = e.latlng.lat;
-    const lon = e.latlng.lng;
-
-    // Convert LatLon back to scene coordinates
-    // Inverse of utmToLatLon:
-    //   lat = UTM_TO_LAT_A * n + UTM_TO_LAT_B  →  n = (lat - UTM_TO_LAT_B) / UTM_TO_LAT_A
-    //   lon = UTM_TO_LON_A * e + UTM_TO_LON_B  →  e = (lon - UTM_TO_LON_B) / UTM_TO_LON_A
-    const utmE = (lon - UTM_TO_LON_B) / UTM_TO_LON_A;
-    const utmN = (lat - UTM_TO_LAT_B) / UTM_TO_LAT_A;
-
-    const sceneX =  utmE - ORIGIN_X;
-    const sceneZ = -(utmN - ORIGIN_Y);
-
-    // Fire a custom event so main.js can update cameraState.target
-    window.dispatchEvent(new CustomEvent('minimap-click', {
-        detail: { x: sceneX, z: sceneZ }
-    }));
-});
+    // Click on minimap → move camera target to that location
+    _map.on('click', (e) => {
+        const [utmE, utmN] = wgs84ToUtm(e.latlng.lat, e.latlng.lng);
+        window.dispatchEvent(new CustomEvent('minimap-click', {
+            detail: { x: utmE - ORIGIN_X, z: -(utmN - ORIGIN_Y) },
+        }));
+    });
 
     L.control.zoom({ position: 'topright' }).addTo(_map);
 }
