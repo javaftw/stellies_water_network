@@ -24,17 +24,55 @@ const FOV_MAX_DIST    = 4000;
 const CONE_MAX_RADIUS = 2000;
 const CAM_FOV_DEG     = 60;
 
-// ─── UTM 34S → WGS84 linear approximation ────────────────────────────────────
-const UTM_TO_LAT_A =  0.000009017;
-const UTM_TO_LAT_B = -33.996856 - (0.000009017 * 6236232.9034);
-const UTM_TO_LON_A =  0.000010695;
-const UTM_TO_LON_B =  18.807270 - (0.000010695 * 297236.0239);
-
+// ─── UTM 34S → WGS84 (inverse Transverse Mercator, Snyder 1987) ──────────────
+// Replaces the old linear approximation that had ~500 m systematic offset.
+// Accuracy: better than 0.1 m anywhere inside UTM Zone 34.
 function utmToLatLon(e, n) {
-    return [
-        UTM_TO_LAT_A * n + UTM_TO_LAT_B,
-        UTM_TO_LON_A * e + UTM_TO_LON_B,
-    ];
+    const a   = 6378137.0;              // WGS84 semi-major axis (m)
+    const f   = 1 / 298.257223563;      // WGS84 flattening
+    const e2  = 2*f - f*f;              // first eccentricity squared
+    const ep2 = e2 / (1 - e2);          // second eccentricity squared
+    const k0  = 0.9996;                 // UTM scale factor
+    const l0  = 21.0 * Math.PI / 180;  // central meridian — UTM Zone 34
+
+    const x = e - 500000.0;            // remove false easting
+    const y = n - 10000000.0;          // remove false northing (southern hemisphere)
+
+    // Rectifying latitude μ
+    const M  = y / k0;
+    const mu = M / (a * (1 - e2/4 - 3*e2*e2/64 - 5*e2*e2*e2/256));
+
+    // Footprint latitude φ₁ via series
+    const e1   = (1 - Math.sqrt(1 - e2)) / (1 + Math.sqrt(1 - e2));
+    const phi1 = mu
+        + (3*e1/2    - 27*Math.pow(e1,3)/32) * Math.sin(2*mu)
+        + (21*e1*e1/16 - 55*Math.pow(e1,4)/32) * Math.sin(4*mu)
+        + (151*Math.pow(e1,3)/96)             * Math.sin(6*mu)
+        + (1097*Math.pow(e1,4)/512)           * Math.sin(8*mu);
+
+    // Auxiliary values at φ₁
+    const sp1 = Math.sin(phi1), cp1 = Math.cos(phi1);
+    const T1  = sp1*sp1 / (cp1*cp1);
+    const C1  = ep2 * cp1*cp1;
+    const N1  = a / Math.sqrt(1 - e2*sp1*sp1);
+    const R1  = a*(1-e2) / Math.pow(1 - e2*sp1*sp1, 1.5);
+    const D   = x / (N1*k0);
+
+    // Latitude
+    const lat = phi1 - (N1*sp1/cp1/R1) * (
+          D*D/2
+        - (5 + 3*T1 + 10*C1 - 4*C1*C1 - 9*ep2)                        * Math.pow(D,4)/24
+        + (61 + 90*T1 + 298*C1 + 45*T1*T1 - 252*ep2 - 3*C1*C1)        * Math.pow(D,6)/720
+    );
+
+    // Longitude
+    const lon = l0 + (
+          D
+        - (1 + 2*T1 + C1)                                               * Math.pow(D,3)/6
+        + (5 - 2*C1 + 28*T1 - 3*C1*C1 + 8*ep2 + 24*T1*T1)             * Math.pow(D,5)/120
+    ) / cp1;
+
+    return [lat * (180/Math.PI), lon * (180/Math.PI)];
 }
 
 function sceneToLatLon(x, z) {
