@@ -112,6 +112,8 @@ function _dismiss() {
 // ─── DOM builder ──────────────────────────────────────────────────────────────
 
 function _buildDOM() {
+    const _viewerMode = new URLSearchParams(window.location.search).has('viewer');
+
     // ── Overlay shell ────────────────────────────────────────────────────────
     const overlay = document.createElement('div');
     overlay.id = 'ls-overlay';
@@ -154,7 +156,6 @@ function _buildDOM() {
         padding: 48px 32px 32px;
     `;
 
-    const _viewerMode = new URLSearchParams(window.location.search).has('viewer');
     if (_viewerMode) {
         const title = document.createElement('div');
         title.textContent = 'STELLENBOSCH WATER SUPPLY VIEWER DEMO';
@@ -166,7 +167,18 @@ function _buildDOM() {
             text-align: center;
             margin-top: 80px;
         `;
+        const byline = document.createElement('div');
+        byline.textContent = 'by Hennie Kotze — 2026';
+        byline.style.cssText = `
+            font-size: 15px;
+            font-weight: 400;
+            color: #666;
+            letter-spacing: 0.04em;
+            text-align: center;
+            margin-top: 14px;
+        `;
         narrative.appendChild(title);
+        narrative.appendChild(byline);
     } else {
         narrative.appendChild(_buildNarrative());
     }
@@ -195,14 +207,14 @@ function _buildDOM() {
     `;
     document.head.appendChild(styleEl);
 
-    // ── Scroll "more" indicator ───────────────────────────────────────────────
+    // ── Scroll "more" indicator (hidden in viewer mode) ───────────────────────
     const moreIndicator = document.createElement('div');
     moreIndicator.id = 'ls-more';
     moreIndicator.style.cssText = `
         position: fixed; bottom: 208px; right: 24px;
         display: flex; flex-direction: column; align-items: center;
         pointer-events: none; transition: opacity 0.3s ease;
-        opacity: 1;
+        opacity: ${_viewerMode ? '0' : '1'};
     `;
     moreIndicator.innerHTML = `
         <span style="color:#999; font-size:11px; letter-spacing:0.14em; text-transform:uppercase; margin-bottom:6px;">Scroll down for more</span>
@@ -215,10 +227,12 @@ function _buildDOM() {
         }
     `;
 
-    body.addEventListener('scroll', () => {
-        const t = Math.min(1, body.scrollTop / 120);
-        moreIndicator.style.opacity = String(1 - t);
-    });
+    if (!_viewerMode) {
+        body.addEventListener('scroll', () => {
+            const t = Math.min(1, body.scrollTop / 120);
+            moreIndicator.style.opacity = String(1 - t);
+        });
+    }
 
     // ── Footer ────────────────────────────────────────────────────────────────
     const footer = document.createElement('div');
