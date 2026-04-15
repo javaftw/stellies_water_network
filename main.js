@@ -5,7 +5,7 @@ import { Line2 } from 'three/addons/lines/Line2.js';
 import { LineMaterial } from 'three/addons/lines/LineMaterial.js';
 import { LineGeometry } from 'three/addons/lines/LineGeometry.js';
 import { initMinimap, updateMinimap, addMinimapLayers, addSuburbsLayer, highlightMinimapFeature, clearMinimapHighlight, highlightFilterFeatures, clearFilterHighlight, expandMinimap } from './minimap.js';
-import { ORIGIN_X, ORIGIN_Y } from './constants.js';
+import { ORIGIN_X, ORIGIN_Y, DEM_E_MIN, DEM_E_MAX, DEM_N_MIN, DEM_N_MAX } from './constants.js';
 import { initLoadingScreen, taskProgress, taskDone, taskSubDone } from './loadingScreen.js';
 
 const ELEVATION_OFFSET = -5;
@@ -61,6 +61,14 @@ const CAM_MIN_CLEARANCE  = 30;   // hard floor: metres above terrain
 const CAM_SOFT_ZONE      = 150;  // metres above floor where rotation decelerates
 
 function updateCamera() {
+    // Snap target Y to terrain surface (0 if outside DEM bounds)
+    const _tUtmE = cameraState.target.x + ORIGIN_X;
+    const _tUtmN = -cameraState.target.z + ORIGIN_Y;
+    cameraState.target.y = (
+        _tUtmE >= DEM_E_MIN && _tUtmE <= DEM_E_MAX &&
+        _tUtmN >= DEM_N_MIN && _tUtmN <= DEM_N_MAX
+    ) ? sampleTerrainElevation(_tUtmE, _tUtmN) : 0;
+
     let sinPhi   = Math.sin(cameraState.phi);
     let cosPhi   = Math.cos(cameraState.phi);
     const sinTheta = Math.sin(cameraState.theta);
