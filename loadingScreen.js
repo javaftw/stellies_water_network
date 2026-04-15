@@ -332,9 +332,9 @@ function _buildNarrative() {
 
     // ── Salutation ────────────────────────────────────────────────────────────
     const salutation = document.createElement('div');
-    salutation.textContent = 'Dear Dr Sinske,';
+    salutation.textContent = 'Good day Dr Sinske,';
     salutation.style.cssText = `
-        font-size: 26px; font-weight: 700;
+        font-size: 34px; font-weight: 400;
         color: #00aaaa;
         margin-bottom: 28px;
         letter-spacing: 0.02em;
