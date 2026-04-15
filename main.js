@@ -43,7 +43,7 @@ const cameraState = {
     theta:      0,
     phi:        Math.PI / 4,
     radius:     1700,
-    target:     new THREE.Vector3(0, 0, 0),
+    target:     new THREE.Vector3(0, 500, 0),
     isDragging: false,
     isPanning:  false,
     lastX: 0,
