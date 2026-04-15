@@ -330,6 +330,17 @@ function _buildDOM() {
 function _buildNarrative() {
     const frag = document.createDocumentFragment();
 
+    // ── Salutation ────────────────────────────────────────────────────────────
+    const salutation = document.createElement('div');
+    salutation.textContent = 'Dear Dr Sinske,';
+    salutation.style.cssText = `
+        font-size: 26px; font-weight: 700;
+        color: #00aaaa;
+        margin-bottom: 28px;
+        letter-spacing: 0.02em;
+    `;
+    frag.appendChild(salutation);
+
     // ── INTRODUCTION ──────────────────────────────────────────────────────────
     const introLabel = document.createElement('div');
     introLabel.textContent = 'INTRODUCTION';
