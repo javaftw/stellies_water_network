@@ -375,8 +375,10 @@ export function addSuburbsLayer(data, colorMap) {
     lbl.style.cssText = 'cursor:pointer;display:flex;align-items:center;gap:5px;font-size:11px;color:#aaa;';
     const cb = document.createElement('input');
     cb.type    = 'checkbox';
-    cb.checked = false;
+    cb.checked = true;
     cb.style.cssText = 'cursor:pointer;accent-color:#00ccff;';
+    suburbLayer.addTo(_map);
+    window.dispatchEvent(new CustomEvent('suburbs-3d-toggle', { detail: { visible: true } }));
     cb.addEventListener('change', () => {
         if (cb.checked) suburbLayer.addTo(_map); else _map.removeLayer(suburbLayer);
         window.dispatchEvent(new CustomEvent('suburbs-3d-toggle', { detail: { visible: cb.checked } }));
