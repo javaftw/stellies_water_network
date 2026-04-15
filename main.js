@@ -1027,7 +1027,8 @@ function createPipeMaterial() {
 
 // Cached reference to the compiled terrain shader — set in onBeforeCompile,
 // used in the animate loop to avoid a full scene.traverse every frame.
-let _terrainShader = null;
+let _terrainShader  = null;
+let _buildingShader = null;
 
 // --- Load Terrain ---
 initTerrain(scene, {
@@ -1178,7 +1179,49 @@ loader.load(
         const buildings = gltf.scene;
         const buildingMaterial = new THREE.MeshLambertMaterial({
             color: 0xb0b0b0,
+            transparent: true,
         });
+
+        buildingMaterial.onBeforeCompile = (shader) => {
+            shader.uniforms.camPos        = { value: camera.position.clone() };
+            shader.uniforms.camDir        = { value: new THREE.Vector3() };
+            shader.uniforms.coneCosCutoff = { value: Math.cos(THREE.MathUtils.degToRad(25)) };
+            shader.uniforms.coneSoftness  = { value: 0.05 };
+            shader.uniforms.xrayEnabled   = { value: 1.0 };
+
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <common>',
+                `#include <common>
+                varying vec3 vWorldPos;`
+            );
+            shader.vertexShader = shader.vertexShader.replace(
+                '#include <worldpos_vertex>',
+                `#include <worldpos_vertex>
+                vWorldPos = (modelMatrix * vec4(position, 1.0)).xyz;`
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <common>',
+                `#include <common>
+                uniform vec3  camPos;
+                uniform vec3  camDir;
+                uniform float coneCosCutoff;
+                uniform float coneSoftness;
+                uniform float xrayEnabled;
+                varying vec3  vWorldPos;`
+            );
+            shader.fragmentShader = shader.fragmentShader.replace(
+                '#include <dithering_fragment>',
+                `#include <dithering_fragment>
+                vec3  toFrag   = normalize(vWorldPos - camPos);
+                float cosAngle = dot(toFrag, camDir);
+                float t = smoothstep(coneCosCutoff + coneSoftness,
+                                     coneCosCutoff - coneSoftness,
+                                     cosAngle);
+                gl_FragColor.a = mix(1.0, mix(0.55, 1.0, t), xrayEnabled);`
+            );
+            _buildingShader = shader;
+        };
+
         buildings.traverse((child) => {
             if (child.isMesh) {
                 child.castShadow    = true;
@@ -1188,7 +1231,7 @@ loader.load(
                 child.position.y   -= 4;
             }
         });
-		
+
         scene.add(buildings);
         console.log('Buildings loaded');
     },
@@ -2012,6 +2055,15 @@ function animate() {
     // Update terrain shader uniforms
     if (_terrainShader) {
         const u = _terrainShader.uniforms;
+        u.camPos.value.copy(camera.position);
+        u.camDir.value.copy(camForward);
+        u.coneCosCutoff.value = Math.cos(THREE.MathUtils.degToRad(coneState.halfAngleDeg));
+        u.xrayEnabled.value   = coneState.xrayEnabled ? 1.0 : 0.0;
+    }
+
+    // Update building shader uniforms (same cone, gentler fade)
+    if (_buildingShader) {
+        const u = _buildingShader.uniforms;
         u.camPos.value.copy(camera.position);
         u.camDir.value.copy(camForward);
         u.coneCosCutoff.value = Math.cos(THREE.MathUtils.degToRad(coneState.halfAngleDeg));
