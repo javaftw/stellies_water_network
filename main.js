@@ -1217,7 +1217,7 @@ loader.load(
                 float t = smoothstep(coneCosCutoff + coneSoftness,
                                      coneCosCutoff - coneSoftness,
                                      cosAngle);
-                gl_FragColor.a = mix(1.0, mix(0.55, 1.0, t), xrayEnabled);`
+                gl_FragColor.a = mix(1.0, mix(0.35, 1.0, t), xrayEnabled);`
             );
             _buildingShader = shader;
         };
