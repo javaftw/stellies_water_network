@@ -482,10 +482,10 @@ function makePanel(title, initiallyOpen = true) {
     `;
     const titleEl = document.createElement('span');
     titleEl.textContent = title;
-    titleEl.style.cssText = 'font-weight:600; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:#999;';
+    titleEl.style.cssText = 'font-weight:700; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; color:#00ccff;';
     const chevron = document.createElement('span');
     chevron.textContent = initiallyOpen ? '▲' : '▼';
-    chevron.style.cssText = 'font-size:9px; color:#444;';
+    chevron.style.cssText = 'font-size:14px; color:#00ccff;';
     header.appendChild(titleEl);
     header.appendChild(chevron);
     const body = document.createElement('div');
