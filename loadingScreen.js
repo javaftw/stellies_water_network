@@ -382,7 +382,7 @@ function _buildNarrative() {
     frag.appendChild(introLabel);
 
     const headshot = document.createElement('img');
-    headshot.src = 'headshot.png';
+    headshot.src = 'me.png';
     headshot.alt = 'Hennie Kotze';
     headshot.style.cssText = `
         width: 120px; height: 200px;
