@@ -468,8 +468,9 @@ function _buildNarrative() {
     frag.appendChild(_sectionMulti('SKILLS AND EXPERIENCE', [
         'Spatial data wrangling (<strong>QGIS</strong>, Python, PostGIS), develop custom <strong>QGIS</strong> plugins and scripts ' +
         '(Python, Qt Designer, PyQt), perform demand, capacity and prioritization modelling, design and implement algorithmic ' +
-        'solutions using the <strong>QGIS</strong> Processing Framework, web-based 3D visualisation (Three.js, WebGL GLSL). ' +
-        'I am a seasoned developer with a wide variety of development experiences, and I take initiative.',
+        'solutions using the <strong>QGIS</strong> Processing Framework, web-based 3D visualisation (Three.js, WebGL GLSL).',
+        'I am a seasoned developer with a wide variety of development experiences, and I take initiative. ' +
+        'I rapidly grasp assignment requirements and need very little hand-holding.',
         'I have been using <strong>QGIS</strong> for personal projects for many years and was a contributor to the open-source ' +
         'GEEST and GEEST2 projects (Kartoza\u00a0/\u00a0World Bank), but I would like to turn my hobby into a source of income.',
         'Previously in my career I have also developed simulation software, among others, for the SAAF ' +
