@@ -1170,6 +1170,57 @@ initTerrain(scene, {
             taskSubDone('lighting');
         })
         .catch(err => { console.error('Highway lights load error:', err); taskSubDone('lighting'); });
+
+    // --- Suburbs (nested so DEM is guaranteed loaded before sampleTerrainElevation is called) ---
+    fetch('suburbs.geojson')
+        .then(r => r.json())
+        .then(data => {
+            const names    = [...new Set(data.features.map(f => f.properties.SUBURB))].sort();
+            const colorMap = _buildSuburbColorMap(names);
+            addSuburbsLayer(data, colorMap);
+            data.features.forEach(feat => {
+                const name   = feat.properties.SUBURB;
+                const hex    = colorMap[name] || '#ffffff';
+                const coords = feat.geometry.coordinates;
+                const positions = [];
+                coords.forEach(([utmE, utmN]) => {
+                    const sx = utmE - ORIGIN_X;
+                    const sz = -(utmN - ORIGIN_Y);
+                    const sy = sampleTerrainElevation(utmE, utmN) + 2;
+                    positions.push(sx, sy, sz);
+                });
+                if (positions.length < 6) return;
+                const geo = new LineGeometry();
+                geo.setPositions(positions);
+                const mat = new LineMaterial({
+                    color:      parseInt(hex.slice(1), 16),
+                    linewidth:  3,
+                    resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
+                });
+                _suburbLineMats.push(mat);
+                const line = new Line2(geo, mat);
+                line.computeLineDistances();
+                _suburbGroup.add(line);
+            });
+            const centroids = {};
+            data.features.forEach(feat => {
+                const name = feat.properties.SUBURB;
+                if (!centroids[name]) centroids[name] = { xs: [], zs: [] };
+                feat.geometry.coordinates.forEach(([utmE, utmN]) => {
+                    centroids[name].xs.push(utmE - ORIGIN_X);
+                    centroids[name].zs.push(-(utmN - ORIGIN_Y));
+                });
+            });
+            Object.entries(centroids).forEach(([name, { xs, zs }]) => {
+                const cx   = xs.reduce((a, b) => a + b, 0) / xs.length;
+                const cz   = zs.reduce((a, b) => a + b, 0) / zs.length;
+                const cy   = sampleTerrainElevation(cx + ORIGIN_X, -cz + ORIGIN_Y) + 20;
+                const sprite = _makeSuburbLabel(name, colorMap[name] || '#ffffff');
+                sprite.position.set(cx, cy, cz);
+                _suburbGroup.add(sprite);
+            });
+        })
+        .catch(err => console.error('Suburbs GeoJSON load error:', err));
 });
 
 // --- Load Buildings ---
@@ -1586,65 +1637,6 @@ function _makeSuburbLabel(text, hexColor) {
 const _suburbGroup       = new THREE.Group();
 _suburbGroup.renderOrder = 2;    // render after transparent buildings so labels are never obscured
 const _suburbLineMats    = [];   // kept so resolution can be updated on resize
-
-fetch('suburbs.geojson')
-    .then(r => r.json())
-    .then(data => {
-        // Build colour map from sorted unique suburb names
-        const names    = [...new Set(data.features.map(f => f.properties.SUBURB))].sort();
-        const colorMap = _buildSuburbColorMap(names);
-
-        // Add outlines to minimap (checkbox + Leaflet layer)
-        addSuburbsLayer(data, colorMap);
-
-        // ── 3D lines — one Line2 per GeoJSON feature ─────────────────────────
-        data.features.forEach(feat => {
-            const name   = feat.properties.SUBURB;
-            const hex    = colorMap[name] || '#ffffff';
-            const coords = feat.geometry.coordinates;
-
-            const positions = [];
-            coords.forEach(([utmE, utmN]) => {
-                const sx = utmE - ORIGIN_X;
-                const sz = -(utmN - ORIGIN_Y);
-                const sy = sampleTerrainElevation(utmE, utmN) + 2;
-                positions.push(sx, sy, sz);
-            });
-            if (positions.length < 6) return;   // need at least 2 points
-
-            const geo = new LineGeometry();
-            geo.setPositions(positions);
-            const mat = new LineMaterial({
-                color:      parseInt(hex.slice(1), 16),
-                linewidth:  3,
-                resolution: new THREE.Vector2(window.innerWidth, window.innerHeight),
-            });
-            _suburbLineMats.push(mat);
-            const line = new Line2(geo, mat);
-            line.computeLineDistances();
-            _suburbGroup.add(line);
-        });
-
-        // ── Labels — one sprite per unique suburb, at average centroid ───────
-        const centroids = {};
-        data.features.forEach(feat => {
-            const name = feat.properties.SUBURB;
-            if (!centroids[name]) centroids[name] = { xs: [], zs: [] };
-            feat.geometry.coordinates.forEach(([utmE, utmN]) => {
-                centroids[name].xs.push(utmE - ORIGIN_X);
-                centroids[name].zs.push(-(utmN - ORIGIN_Y));
-            });
-        });
-        Object.entries(centroids).forEach(([name, { xs, zs }]) => {
-            const cx   = xs.reduce((a, b) => a + b, 0) / xs.length;
-            const cz   = zs.reduce((a, b) => a + b, 0) / zs.length;
-            const cy   = sampleTerrainElevation(cx + ORIGIN_X, -cz + ORIGIN_Y) + 20;
-            const sprite = _makeSuburbLabel(name, colorMap[name] || '#ffffff');
-            sprite.position.set(cx, cy, cz);
-            _suburbGroup.add(sprite);
-        });
-    })
-    .catch(err => console.error('Suburbs GeoJSON load error:', err));
 
 // Toggle 3D suburb group on/off when minimap checkbox changes
 window.addEventListener('suburbs-3d-toggle', e => {
